@@ -1,0 +1,74 @@
+<div class="flex h-screen bg-slate-100">
+  <aside class="w-64 bg-slate-900 text-white flex flex-col">
+    <div class="p-6 text-xl font-bold border-b border-slate-800">
+      UMA Panel
+    </div>
+
+    <nav class="flex-1 p-4 space-y-2">
+      <p class="text-xs font-semibold text-slate-500 uppercase px-2">Menú Principal</p>
+
+      <a href="#" class="block px-4 py-2 rounded bg-blue-600">
+        {{ userRole() === 'ADMIN' ? 'Todas las Páginas' : 'Mis Páginas' }}
+      </a>
+
+      <a href="#" class="block px-4 py-2 rounded hover:bg-slate-800 transition">Perfil</a>
+
+      @if (userRole() === 'ADMIN') {
+        <div class="pt-6 mt-6 border-t border-slate-800">
+          <p class="text-xs font-semibold text-red-400 uppercase px-2 mb-2">Administración</p>
+          <a href="#" class="block px-4 py-2 rounded hover:bg-red-900/20 text-red-200 transition">
+            Gestionar Usuarios
+          </a>
+          <a href="#" class="block px-4 py-2 rounded hover:bg-red-900/20 text-red-200 transition">
+            Configuración Global
+          </a>
+        </div>
+      }
+    </nav>
+
+    <div class="p-4 bg-slate-800 text-sm">
+      sesión iniciada como como: <span class="font-bold text-blue-400">{{ username() }}</span>
+      <div class="text-[10px] text-slate-400 mt-1">Rol: {{ userRole() }}</div>
+    </div>
+  </aside>
+
+  <main class="flex-1 flex flex-col overflow-hidden">
+    <header class="bg-white shadow-sm h-16 flex items-center justify-between px-8">
+      <h2 class="text-lg font-medium text-slate-700">
+        {{ userRole() === 'ADMIN' ? 'Gestión Global de Páginas' : 'Paginas Web' }}
+      </h2>
+
+      <div class="flex gap-3">
+        @if (userRole() === 'ADMIN') {
+          <button class="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-medium hover:bg-slate-700 transition">
+            + Nueva Página
+          </button>
+
+          <button class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium shadow-lg shadow-red-200 hover:bg-red-700 transition">
+            + Añadir Usuario
+          </button>
+        }
+      </div>
+    </header>
+
+    <section class="p-8 overflow-y-auto">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 class="font-bold text-slate-800">Resumen de Cuenta</h3>
+          <p class="text-sm text-slate-500 mt-1">
+            Tienes acceso a {{ userRole() === 'ADMIN' ? 'todas las páginas del sistema' : 'tus sitios asignados' }}.
+          </p>
+        </div>
+
+        @if (userRole() === 'ADMIN') {
+          <div class="bg-red-50 p-6 rounded-xl border border-red-100">
+            <h3 class="font-bold text-red-800">Control de Usuarios</h3>
+            <p class="text-sm text-red-600 mt-1">Hay usuarios esperando aprobación.</p>
+          </div>
+        }
+
+      </div>
+    </section>
+  </main>
+</div>
