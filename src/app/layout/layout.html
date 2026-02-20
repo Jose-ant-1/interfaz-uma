@@ -1,0 +1,62 @@
+<div class="flex h-screen bg-slate-100">
+  <aside class="w-64 bg-slate-900 text-white flex flex-col">
+    <div class="p-6 text-xl font-bold border-b border-slate-800 text-blue-400">UMA Panel</div>
+
+    <nav class="flex-1 p-4 space-y-2">
+      <p class="text-xs font-semibold text-slate-500 uppercase px-2 mb-2">Menú Principal</p>
+
+      <a routerLink="/dashboard/paginas" routerLinkActive="bg-blue-600" class="block px-4 py-2 rounded transition">
+        <span class="flex items-center gap-3">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">...</svg>
+          {{ userRole() === 'ADMIN' ? 'Control Global' : 'Mis Sitios' }}
+        </span>
+      </a>
+
+      @if (userRole() === 'ADMIN') {
+        <div class="pt-6 mt-6 border-t border-slate-800">
+          <p class="text-xs font-semibold text-red-400 uppercase px-2 mb-2">Administración</p>
+          <a routerLink="/dashboard/usuarios" routerLinkActive="bg-red-900/40" class="block px-4 py-2 rounded text-red-100 hover:bg-slate-800 transition">
+            Gestionar Usuarios
+          </a>
+          <a routerLink="/dashboard/usuarios" routerLinkActive="bg-red-900/40" class="block px-4 py-2 rounded text-red-100 hover:bg-slate-800 transition">
+            Gestionar Páginas
+          </a>
+        </div>
+      }
+    </nav>
+
+    <div class="p-4 bg-slate-800 text-sm flex items-center gap-3">
+      <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold">
+        {{ username()[0] }}
+      </div>
+      <div>
+        <p class="font-bold leading-none">{{ username() }}</p>
+        <p class="text-[10px] text-slate-400 uppercase tracking-tighter">{{ userRole() }}</p>
+      </div>
+    </div>
+  </aside>
+
+  <main class="flex-1 flex flex-col overflow-hidden">
+    <header class="bg-white shadow-sm h-16 flex items-center justify-between px-8">
+      <h2 class="text-lg font-medium text-slate-700">
+        {{ userRole() === 'ADMIN' ? 'Consola de Administrador' : 'Panel de Usuario' }}
+      </h2>
+
+      @if (userRole() === 'ADMIN') {
+        <div class="flex items-center gap-3">
+          <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+            + Nueva Web
+          </button>
+
+          <button class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-700 transition-colors">
+            + Nuevo Usuario
+          </button>
+        </div>
+      }
+    </header>
+
+    <section class="p-8 overflow-y-auto flex-1 bg-slate-50">
+      <router-outlet></router-outlet>
+    </section>
+  </main>
+</div>
