@@ -27,7 +27,7 @@
 
     <div class="p-4 bg-slate-800 text-sm flex items-center gap-3">
       <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold">
-        {{ username()[0] }}
+        {{ username() }}
       </div>
       <div>
         <p class="font-bold leading-none">{{ username() }}</p>
@@ -42,17 +42,24 @@
         {{ userRole() === 'ADMIN' ? 'Consola de Administrador' : 'Panel de Usuario' }}
       </h2>
 
-      @if (userRole() === 'ADMIN') {
-        <div class="flex items-center gap-3">
+      <div class="flex items-center gap-4">
+        @if (userRole() === 'ADMIN') {
           <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
             + Nueva Web
           </button>
-
           <button class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-700 transition-colors">
             + Nuevo Usuario
           </button>
-        </div>
-      }
+        }
+
+        <button (click)="cerrarSesion()"
+                class="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span class="font-bold text-sm">Salir</span>
+        </button>
+      </div>
     </header>
 
     <section class="p-8 overflow-y-auto flex-1 bg-slate-50">

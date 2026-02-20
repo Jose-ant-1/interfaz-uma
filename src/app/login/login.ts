@@ -1,18 +1,27 @@
-import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router'; // 1. Importar el Router
+import { Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-login',
   standalone: true,
+  imports: [FormsModule],
   templateUrl: './login.html',
 })
 export class Login {
-  // 2. Inyectar el Router
   private router = inject(Router);
+  private authService = inject(AuthService);
 
-  // 3. Crear la función temporal
-  loginTemporal() {
-    // Simplemente navegamos a la ruta que tengas configurada para el dashboard
-    this.router.navigate(['/dashboard']);
+  email = '';
+  password = '';
+  errorMessage = signal('');
+
+  loginReal() {
+    this.authService.login(this.email, this.password).subscribe({
+      next: () => this.router.navigate(['/dashboard/paginas']),
+      error: () => this.errorMessage.set('Error: Usuario o contraseña incorrectos')
+    });
   }
+
 }

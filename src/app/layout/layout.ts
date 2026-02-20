@@ -1,5 +1,6 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-layout',
@@ -8,7 +9,15 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
   templateUrl: './layout.html'
 })
 export class Layout {
-  // Cambia esto a 'USER' para probar la vista de Arturo
-  userRole = signal('ADMIN');
-  username = signal('Arturo');
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  // Signals conectadas al servicio
+  userRole = this.authService.userRole;
+  username = this.authService.userName;
+
+  cerrarSesion() {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
 }

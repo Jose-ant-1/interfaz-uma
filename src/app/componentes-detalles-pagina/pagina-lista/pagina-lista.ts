@@ -1,5 +1,7 @@
-import { Component, signal } from '@angular/core';
-import { PaginaCard } from '../pagina-card/pagina-card'; // Ajusta ruta
+import { Component, inject, signal, OnInit } from '@angular/core';
+import { AuthService } from '../../services/auth';
+import { PaginaService } from '../../services/pagina.service'; // Asegúrate de inyectarlo
+import { PaginaCard } from '../pagina-card/pagina-card';
 
 @Component({
   selector: 'app-pagina-lista',
@@ -7,12 +9,12 @@ import { PaginaCard } from '../pagina-card/pagina-card'; // Ajusta ruta
   imports: [PaginaCard],
   templateUrl: './pagina-lista.html',
 })
-export class PaginaLista {
-  userRole = signal('ADMIN'); // Temporal
 
-  // Simulamos lo que mandaría la API
-  paginas = signal([
-    { id: 1, nombre: 'Mi Web Personal', url: 'www.arturo.com' },
-    { id: 2, nombre: 'Tienda Online', url: 'www.tienda.es' }
-  ]);
+// pagina-lista.ts
+export class PaginaLista {
+  private authService = inject(AuthService);
+
+  // Conectamos la señal
+  userRole = this.authService.userRole;
+  paginas = signal<any[]>([]);
 }
