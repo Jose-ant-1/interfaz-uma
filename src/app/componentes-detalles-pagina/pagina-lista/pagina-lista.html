@@ -1,6 +1,6 @@
 <div class="grid grid-cols-1 gap-4 w-full">
   @for (item of paginas(); track item.id) {
-    <app-pagina-card [pagina]="item" [isAdmin]="userRole() === 'ADMIN'"></app-pagina-card>
+    <app-pagina-card [pagina]="item"></app-pagina-card>
   } @empty {
     <div class="col-span-full flex flex-col items-center justify-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-200">
       <div class="text-slate-300 mb-4">

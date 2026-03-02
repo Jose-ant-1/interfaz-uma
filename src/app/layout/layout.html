@@ -25,15 +25,17 @@
       }
     </nav>
 
-    <div class="p-4 bg-slate-800 text-sm flex items-center gap-3">
-      <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold">
-        {{ username() }}
+    <a routerLink="/dashboard/perfil" class="block p-4 bg-slate-800 text-sm flex items-center gap-3 hover:bg-slate-700 transition-colors cursor-pointer border-t border-slate-700">
+
+      <div class="flex-1">
+        <p class="font-bold leading-none text-slate-100">{{ username() }}</p>
+        <p class="text-[10px] text-slate-400 uppercase tracking-tighter mt-1">{{ userRole() }}</p>
       </div>
-      <div>
-        <p class="font-bold leading-none">{{ username() }}</p>
-        <p class="text-[10px] text-slate-400 uppercase tracking-tighter">{{ userRole() }}</p>
-      </div>
-    </div>
+
+      <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </a>
   </aside>
 
   <main class="flex-1 flex flex-col overflow-hidden">

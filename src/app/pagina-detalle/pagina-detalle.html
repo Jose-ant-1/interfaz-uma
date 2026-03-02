@@ -1,0 +1,49 @@
+@if (pagina(); as p) {
+  <div class="max-w-4xl mx-auto p-8">
+    <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
+
+      <div class="flex justify-between items-center mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900">{{ p.nombre }}</h1>
+          <p class="text-blue-600 font-mono mt-1">{{ p.url }}</p>
+        </div>
+        <div class="flex flex-col items-end">
+          @let st = p.estadoCode || 0;
+          <span [class]="'px-4 py-2 rounded-full text-sm font-bold shadow-sm ' +
+            (st === 200 ? 'bg-green-100 text-green-700 border border-green-200' :
+             st === 0 ? 'bg-slate-100 text-slate-500 animate-pulse' :
+             'bg-red-100 text-red-700 border border-red-200')">
+            {{ st === 200 ? '● ONLINE' : st === 0 ? 'COMPROBANDO...' : '● OFFLINE (' + st + ')' }}
+          </span>
+        </div>
+      </div>
+      <div class="bg-slate-50 p-5 rounded-xl mb-8 border border-slate-100">
+        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Nota Informativa</p>
+        <p class="text-slate-700 leading-relaxed">{{ p.notaInfo || 'Sin descripción disponible.' }}</p>
+      </div>
+      @if (isAdmin()) {
+        <div class="mt-8 pt-6 border-t">
+          <h2 class="text-xl font-bold mb-4">Usuarios con acceso</h2>
+          <div class="space-y-2">
+            @for (user of usuariosConAcceso(); track user.id) {
+              <div class="p-3 bg-slate-50 border rounded-lg flex justify-between">
+                <span>{{ user.nombre }}</span>
+                <span class="text-slate-500 text-sm">{{ user.email }}</span>
+              </div>
+            } @empty {
+              <p class="text-slate-400">No hay usuarios con acceso.</p>
+            }
+          </div>
+        </div>
+      }
+      <div class="mt-8">
+        <button routerLink="/dashboard/paginas" class="text-blue-600">← Volver</button>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="flex flex-col items-center justify-center p-20">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+    <p class="text-slate-400">Cargando detalles de la página...</p>
+  </div>
+}
