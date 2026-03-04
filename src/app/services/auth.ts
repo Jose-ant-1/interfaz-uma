@@ -1,6 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { tap } from 'rxjs';
+import {catchError, tap} from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -14,17 +14,21 @@ export class AuthService {
   login(email: string, pass: string) {
     const authHeader = 'Basic ' + btoa(email + ':' + pass);
 
-    return this.http.get(`${this.apiUrl}/me`, {
-      headers: new HttpHeaders({ 'Authorization': authHeader })
-    }).pipe(
-      tap((user: any) => {
-        // Guardamos credenciales y actualizamos señales
-        localStorage.setItem('authData', authHeader);
-        localStorage.setItem('userRole', user.permiso); // 'ADMIN' o 'USER'
-        localStorage.setItem('userName', user.nombre);
+    // 1. Guardamos ANTES de la llamada para que el interceptor lo pesque
+    localStorage.setItem('authData', authHeader);
 
+    return this.http.get(`${this.apiUrl}/me`).pipe(
+      tap((user: any) => {
+        // Si tiene éxito, guardamos el resto
+        localStorage.setItem('userRole', user.permiso);
+        localStorage.setItem('userName', user.nombre);
         this.userRole.set(user.permiso);
         this.userName.set(user.nombre);
+      }),
+      catchError(err => {
+        // Si falla, borramos el token temporal para no dejar basura
+        localStorage.removeItem('authData');
+        throw err;
       })
     );
   }

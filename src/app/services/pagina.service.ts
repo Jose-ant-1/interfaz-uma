@@ -6,22 +6,30 @@ import { Pagina } from '../models/pagina.model';
 @Injectable({
   providedIn: 'root'
 })
+
 export class PaginaService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/paginas'; // Ajusta a tu URL de Spring Boot
+  private apiUrl = 'http://localhost:8080/api/paginas';
 
-  // Este método servirá para ambos roles gracias a que
-  // el Interceptor ya envía quién eres.
   getPaginas(): Observable<Pagina[]> {
     return this.http.get<Pagina[]>(this.apiUrl);
   }
 
-  // Ejemplo de CRUD que solo podrá ejecutar el ADMIN (el backend lo validará)
+  // ESTE ES EL QUE FALTA: Obtener una sola página por su ID
+  getPaginaById(id: number): Observable<Pagina> {
+    return this.http.get<Pagina>(`${this.apiUrl}/${id}`);
+  }
+
   createPagina(pagina: Pagina): Observable<Pagina> {
     return this.http.post<Pagina>(this.apiUrl, pagina);
   }
 
   deletePagina(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  // Corregimos la URL para que use la variable apiUrl
+  updatePagina(id: number, data: any): Observable<Pagina> {
+    return this.http.put<Pagina>(`${this.apiUrl}/${id}`, data);
   }
 }

@@ -18,9 +18,6 @@
           <a routerLink="/dashboard/usuarios" routerLinkActive="bg-red-900/40" class="block px-4 py-2 rounded text-red-100 hover:bg-slate-800 transition">
             Gestionar Usuarios
           </a>
-          <a routerLink="/dashboard/usuarios" routerLinkActive="bg-red-900/40" class="block px-4 py-2 rounded text-red-100 hover:bg-slate-800 transition">
-            Gestionar Páginas
-          </a>
         </div>
       }
     </nav>
@@ -41,7 +38,7 @@
   <main class="flex-1 flex flex-col overflow-hidden">
     <header class="bg-white shadow-sm h-16 flex items-center justify-between px-8">
       <h2 class="text-lg font-medium text-slate-700">
-        {{ userRole() === 'ADMIN' ? 'Consola de Administrador' : 'Panel de Usuario' }}
+        {{ userRole() === 'ADMIN' ? 'Administración de Monitoreos' : 'Monitoreo de Páginas' }}
       </h2>
 
       <div class="flex items-center gap-4">

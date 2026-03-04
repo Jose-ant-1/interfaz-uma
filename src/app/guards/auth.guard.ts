@@ -13,4 +13,4 @@ export const authGuard: CanActivateFn = (route, state) => {
 
   // Si es null, al login de cabeza
   return router.parseUrl('/login');
-};
+}
