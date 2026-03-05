@@ -5,57 +5,57 @@
     <nav class="flex-1 p-4 space-y-2">
       <p class="text-xs font-semibold text-slate-500 uppercase px-2 mb-2">Menú Principal</p>
 
-      <a routerLink="/dashboard/paginas" routerLinkActive="bg-blue-600" class="block px-4 py-2 rounded transition">
+      <a routerLink="/dashboard/monitoreos" routerLinkActive="bg-blue-600" class="block px-4 py-2 rounded transition">
         <span class="flex items-center gap-3">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">...</svg>
-          {{ userRole() === 'ADMIN' ? 'Control Global' : 'Mis Sitios' }}
+          Mis monitoreos
         </span>
       </a>
 
-      @if (userRole() === 'ADMIN') {
+      @if (esAdmin()) {
         <div class="pt-6 mt-6 border-t border-slate-800">
-          <p class="text-xs font-semibold text-red-400 uppercase px-2 mb-2">Administración</p>
+          <p class="text-xs font-semibold text-red-400 uppercase px-2 mb-2">Administración General</p>
+
+          <a routerLink="/dashboard/todos-monitoreos" routerLinkActive="bg-red-900/40" class="block px-4 py-2 rounded text-red-100 hover:bg-slate-800 transition mb-1">
+            <span class="flex items-center gap-3">
+              Todos los monitoreos
+            </span>
+          </a>
+
           <a routerLink="/dashboard/usuarios" routerLinkActive="bg-red-900/40" class="block px-4 py-2 rounded text-red-100 hover:bg-slate-800 transition">
-            Gestionar Usuarios
+            <span class="flex items-center gap-3">
+              Gestionar Usuarios
+            </span>
           </a>
         </div>
       }
     </nav>
 
-    <a routerLink="/dashboard/perfil" class="block p-4 bg-slate-800 text-sm flex items-center gap-3 hover:bg-slate-700 transition-colors cursor-pointer border-t border-slate-700">
-
+    <a routerLink="/dashboard/perfil" class="block p-4 bg-slate-800 text-sm flex items-center gap-3 hover:bg-slate-700 transition-colors border-t border-slate-700">
       <div class="flex-1">
-        <p class="font-bold leading-none text-slate-100">{{ username() }}</p>
+        <p class="font-bold leading-none text-slate-100">{{ userName() }}</p>
         <p class="text-[10px] text-slate-400 uppercase tracking-tighter mt-1">{{ userRole() }}</p>
       </div>
-
-      <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-      </svg>
     </a>
   </aside>
 
   <main class="flex-1 flex flex-col overflow-hidden">
     <header class="bg-white shadow-sm h-16 flex items-center justify-between px-8">
-      <h2 class="text-lg font-medium text-slate-700">
-        {{ userRole() === 'ADMIN' ? 'Administración de Monitoreos' : 'Monitoreo de Páginas' }}
-      </h2>
+      <h2 class="text-lg font-medium text-slate-700">Monitoreo De Páginas</h2>
 
       <div class="flex items-center gap-4">
-        @if (userRole() === 'ADMIN') {
-          <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
-            + Nueva Web
-          </button>
-          <button class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-700 transition-colors">
+        <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition shadow-sm">
+          + Nueva Web
+        </button>
+
+        @if (esAdmin()) {
+          <button class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-700 transition">
             + Nuevo Usuario
           </button>
         }
 
-        <button (click)="cerrarSesion()"
-                class="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
+        <div class="h-6 w-px bg-slate-200 mx-2"></div>
+
+        <button (click)="cerrarSesion()" class="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
           <span class="font-bold text-sm">Salir</span>
         </button>
       </div>

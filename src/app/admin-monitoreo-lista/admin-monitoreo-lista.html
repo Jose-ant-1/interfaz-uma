@@ -1,0 +1,21 @@
+<div class="space-y-6">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-800">Panel Global</h2>
+      <p class="text-slate-500 font-medium">Todos los monitoreos registrados en UMA</p>
+    </div>
+    <div class="bg-red-50 text-red-600 px-4 py-2 rounded-xl border border-red-100 font-bold">
+      Total: {{ monitoreos().length }}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4">
+    @for (item of monitoreos(); track item.id) {
+      <app-monitoreo-card [monitoreo]="item" [isAdmin]="true"></app-monitoreo-card>
+    } @empty {
+      <div class="py-20 text-center bg-white rounded-3xl border-2 border-dashed border-slate-100">
+        <p class="text-slate-400">No hay datos globales disponibles.</p>
+      </div>
+    }
+  </div>
+</div>

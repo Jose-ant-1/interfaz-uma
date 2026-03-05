@@ -1,8 +1,8 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core'; // Añadido OnDestroy
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { MonitoreoService } from '../../services/monitoreo.service';
 import { AuthService } from '../../services/auth';
 import { MonitoreoCard } from '../monitoreo-card/monitoreo-card';
-import { interval, Subscription } from 'rxjs'; // Necesario para el timer
+import { interval, Subscription, forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-monitoreo-lista',
@@ -13,33 +13,38 @@ import { interval, Subscription } from 'rxjs'; // Necesario para el timer
 export class MonitoreoLista implements OnInit, OnDestroy {
   private monitoreoService = inject(MonitoreoService);
   private authService = inject(AuthService);
-  private refreshSub?: Subscription; // Para limpiar el intervalo
+  private refreshSub?: Subscription;
 
-  monitoreos = signal<any[]>([]);
+  // Creamos dos señales separadas
+  misMonitoreos = signal<any[]>([]);
+  colaboraciones = signal<any[]>([]);
+
   userRole = this.authService.userRole;
 
   ngOnInit() {
-    this.cargarMonitoreos();
+    this.cargarTodo();
 
-    // Creamos un intervalo que sincronice con la frecuencia de la API (30s)
+    // Actualización automática cada 30 segundos para ambas listas
     this.refreshSub = interval(30000).subscribe(() => {
-      this.cargarMonitoreos();
-      console.log('Dashboard: Datos actualizados del servidor');
+      this.cargarTodo();
     });
   }
 
   ngOnDestroy() {
-    // Es vital desuscribirse para que el timer no siga corriendo en segundo plano
     this.refreshSub?.unsubscribe();
   }
 
-  cargarMonitoreos() {
-    this.monitoreoService.getMisMonitoreos().subscribe({
-      next: (data) => {
-        // Actualizamos el signal con los nuevos estados y fechas
-        this.monitoreos.set(data);
+  cargarTodo() {
+    // Usamos forkJoin para disparar ambas peticiones a la vez
+    forkJoin({
+      propios: this.monitoreoService.getMisMonitoreos(),
+      invitado: this.monitoreoService.getColaboraciones()
+    }).subscribe({
+      next: (res) => {
+        this.misMonitoreos.set(res.propios);
+        this.colaboraciones.set(res.invitado);
       },
-      error: (err) => console.error("Error al cargar monitoreos", err)
+      error: (err) => console.error('Error al cargar listas de monitoreo', err)
     });
   }
 }

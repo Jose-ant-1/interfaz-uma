@@ -1,0 +1,77 @@
+@if (monitoreo(); as m) {
+  <div class="max-w-4xl mx-auto p-8">
+    <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
+
+      <div class="flex justify-between items-start mb-8">
+        <div class="space-y-2">
+          <h1 class="text-3xl font-bold text-slate-900">{{ m.nombre }}</h1>
+          <div class="flex items-center gap-2">
+            <span class="text-blue-600 font-mono bg-blue-50 px-2 py-1 rounded text-sm">{{ m.paginaUrl }}</span>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-end">
+          @let estado = m.ultimoEstado;
+          <span [class]="'px-4 py-2 rounded-xl text-sm font-black shadow-sm ' +
+            (estado === 200 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')">
+            {{ estado === 200 ? '● ONLINE' : '● OFFLINE (' + (estado || '---') + ')' }}
+          </span>
+          <p class="text-[10px] text-slate-400 mt-2 uppercase font-bold">Última revisión: {{ m.fechaUltimaRevision }}</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-8">
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+          <p class="text-xs font-bold text-slate-400 uppercase mb-1">Frecuencia de prueba</p>
+          <p class="text-slate-700 font-medium">Cada {{ m.minutosMonitoreo }} minutos</p>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+          <p class="text-xs font-bold text-slate-400 uppercase mb-1">Repeticiones antes de aviso</p>
+          <p class="text-slate-700 font-medium">{{ m.repeticiones }} intentos fallidos</p>
+        </div>
+      </div>
+
+      <div class="mb-8 p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
+        <p class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">Nota Informativa de la Página</p>
+        <p class="text-slate-700 leading-relaxed italic">"{{ notaInformativa() }}"</p>
+      </div>
+
+      <div class="space-y-6 pt-6 border-t border-slate-100">
+        <div>
+          <h2 class="text-sm font-bold text-slate-400 uppercase mb-3">Propiedad y Acceso</h2>
+          <div class="flex items-center justify-between p-4 bg-white">
+            <span class="text-slate-700 font-bold">{{ m.propietarioNombre }}</span>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="text-sm font-bold text-slate-400 uppercase mb-3">Usuarios Invitados</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            @for (correo of m.invitadosCorreo; track correo) {
+              <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                <span class="text-sm font-medium text-slate-800">{{ correo }}</span>
+              </div>
+            } @empty {
+              <p class="text-slate-400 text-sm italic">No hay invitados en este monitoreo.</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-10 flex gap-4">
+        <button routerLink="/dashboard/monitoreos"
+                class="px-6 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold hover:bg-slate-200 transition-all">
+          ← Volver
+        </button>
+
+          <button (click)="eliminarMonitoreo()"
+                  class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-all ml-auto">
+            Eliminar Monitoreo
+          </button>
+
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="p-20 text-center text-slate-500 animate-pulse font-medium">Cargando monitoreo global...</div>
+}
