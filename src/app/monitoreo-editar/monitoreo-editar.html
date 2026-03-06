@@ -1,0 +1,63 @@
+<div class="max-w-4xl mx-auto p-8">
+  <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
+
+    <div class="flex justify-between items-center mb-8 pb-6 border-b border-slate-100">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Configurar Monitoreo</h1>
+        <p class="text-slate-400 text-sm">Modifica los parámetros de control para esta web</p>
+      </div>
+      <div class="flex gap-3">
+        <button (click)="guardar()" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-md">
+          Guardar Cambios
+        </button>
+      </div>
+    </div>
+
+    @if (cargando()) {
+      <div class="flex justify-center py-10">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    } @else {
+      <div class="space-y-6">
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nombre Identificador</label>
+          <input [(ngModel)]="monitoreo.nombre" type="text"
+                 class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-semibold focus:ring-2 focus:ring-blue-400 focus:outline-none transition"
+                 placeholder="Ej: Mi Servidor Principal">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Dirección URL a monitorear</label>
+          <input [(ngModel)]="monitoreo.paginaUrl" type="text"
+                 class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-blue-600 font-mono focus:ring-2 focus:ring-blue-400 focus:outline-none transition">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Frecuencia (minutos)</label>
+            <input [(ngModel)]="monitoreo.minutosMonitoreo" type="number" min="1"
+                   class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-semibold focus:ring-2 focus:ring-blue-400 focus:outline-none transition">
+            <p class="text-[10px] text-slate-400 mt-1 italic">Tiempo entre cada verificación de estado.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Intentos fallidos</label>
+            <input [(ngModel)]="monitoreo.repeticiones" type="number" min="1" max="10"
+                   class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-semibold focus:ring-2 focus:ring-blue-400 focus:outline-none transition">
+            <p class="text-[10px] text-slate-400 mt-1 italic">Número de fallos antes de marcar como OFFLINE.</p>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="mt-10 pt-6 border-t border-slate-50">
+      <button routerLink="/dashboard/monitoreos"
+              class="text-slate-400 hover:text-slate-600 flex items-center gap-2 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Cancelar y volver a la lista
+      </button>
+    </div>
+  </div>
+</div>

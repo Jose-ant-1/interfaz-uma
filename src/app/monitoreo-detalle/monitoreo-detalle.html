@@ -31,31 +31,28 @@
         </div>
       </div>
 
-      <div class="mb-8 p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
-        <p class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">Nota Informativa de la Página</p>
-        <p class="text-slate-700 leading-relaxed italic">"{{ notaInformativa() }}"</p>
-      </div>
-
       <div class="space-y-6 pt-6 border-t border-slate-100">
         <div>
-          <h2 class="text-sm font-bold text-slate-400 uppercase mb-3">Propiedad y Acceso</h2>
-          <div class="flex items-center justify-between p-4 bg-white">
-            <span class="text-slate-700 font-bold">{{ m.propietarioNombre }}</span>
+          <h2 class="text-sm font-bold text-slate-400 uppercase mb-3">Propiedad</h2>
+          <div class="flex items-center justify-between p-4 bg-blue-50 border border-blue-100 rounded-xl">
+            <span class="text-slate-700 font-bold">{{ m.propietario.nombre }}</span>
           </div>
         </div>
 
-        <div>
-          <h2 class="text-sm font-bold text-slate-400 uppercase mb-3">Usuarios Invitados</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            @for (correo of m.invitadosCorreo; track correo) {
-              <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
-                <span class="text-sm font-medium text-slate-800">{{ correo }}</span>
-              </div>
-            } @empty {
-              <p class="text-slate-400 text-sm italic">No hay invitados en este monitoreo.</p>
-            }
+        @if (esDuenio()) {
+          <div>
+            <h2 class="text-sm font-bold text-slate-400 uppercase mb-3">Usuarios Invitados</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              @for (invitado of m.invitados; track invitado.id) {
+                <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg flex justify-between items-center">
+                  <span class="text-sm font-medium text-slate-800">{{ invitado.nombre }}</span>
+                </div>
+              } @empty {
+                <p class="text-slate-400 text-sm italic">No hay invitados en este monitoreo.</p>
+              }
+            </div>
           </div>
-        </div>
+        }
       </div>
 
       <div class="mt-10 flex gap-4">
@@ -64,14 +61,13 @@
           ← Volver
         </button>
 
-          <button (click)="eliminarMonitoreo()"
-                  class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-all ml-auto">
-            Eliminar Monitoreo
-          </button>
-
+        <button (click)="eliminarMonitoreo()"
+                class="px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition-all ml-auto">
+          Eliminar Monitoreo
+        </button>
       </div>
     </div>
   </div>
 } @else {
-  <div class="p-20 text-center text-slate-500 animate-pulse font-medium">Cargando monitoreo global...</div>
+  <div class="p-20 text-center text-slate-500 animate-pulse font-medium">Cargando detalles del monitoreo...</div>
 }

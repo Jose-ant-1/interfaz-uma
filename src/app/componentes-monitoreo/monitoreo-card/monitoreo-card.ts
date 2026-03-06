@@ -16,9 +16,11 @@ export class MonitoreoCard {
 
   // 1. Comparamos el ID del usuario logueado con el ID del propietario del monitoreo
   esPropietario = computed(() => {
-    const logueadoId = this.authService.userId(); // Asegúrate de que authService exponga el ID
-    if (!logueadoId || !this.monitoreo.propietarioId) return false;
-    return Number(logueadoId) === Number(this.monitoreo.propietarioId);
+    const logueadoId = this.authService.userId();
+    // En el listado el backend envía 'propietarioId'
+    const propId = this.monitoreo.propietarioId;
+    if (!logueadoId || !propId) return false;
+    return Number(logueadoId) === Number(propId);
   });
 
   estadoVisual = computed(() => {
@@ -30,7 +32,7 @@ export class MonitoreoCard {
 
   // Métodos para los botones
   editarMonitoreo() {
-    this.router.navigate(['/dashboard/monitoreo/editar', this.monitoreo.id]);
+    this.router.navigate(['/dashboard/monitoreo/edit', this.monitoreo.id]);
   }
 
   eliminarMonitoreo() {

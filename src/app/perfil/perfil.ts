@@ -26,9 +26,16 @@ export class PerfilComponent implements OnInit {
 
   cargarDatos() {
     // 1. Cargamos el perfil
+// En perfil.ts
     this.monitoreoService.getPerfil().subscribe({
-      next: (user) => this.usuario.set(user),
-      error: (err) => console.error("Error al obtener perfil", err)
+      // Tipamos 'user' como 'any' (o usa tu interfaz UsuarioDTO si la tienes)
+      next: (user: any) => {
+        this.usuario.set(user);
+      },
+      // Tipamos 'err' como 'any' para satisfacer al compilador
+      error: (err: any) => {
+        console.error("Error al obtener perfil", err);
+      }
     });
 
     // 2. Cargamos monitoreos propios
