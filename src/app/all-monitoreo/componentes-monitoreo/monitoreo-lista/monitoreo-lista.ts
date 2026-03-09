@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
-import { MonitoreoService } from '../../services/monitoreo.service';
-import { AuthService } from '../../services/auth';
+import { MonitoreoService } from '../../../services/monitoreo.service';
+import { AuthService } from '../../../services/auth';
 import { MonitoreoCard } from '../monitoreo-card/monitoreo-card';
 import { interval, Subscription, forkJoin } from 'rxjs';
 

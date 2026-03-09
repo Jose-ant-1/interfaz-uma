@@ -1,26 +1,27 @@
 import { Component, inject, computed } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterModule],
   templateUrl: './layout.html'
 })
 export class Layout {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  // Signals del servicio
-  userRole = this.authService.userRole;
+  // Exponemos las señales del servicio para el HTML
   userName = this.authService.userName;
+  userRole = this.authService.userRole;
 
-  // Lógica centralizada: un solo booleano para todo el HTML
-  esAdmin = computed(() => this.userRole() === 'ADMIN');
+  // Helper para el @if (esAdmin())
+  esAdmin = computed(() => this.authService.userRole() === 'ADMIN');
 
   cerrarSesion() {
-    this.authService.logout();
+    this.authService.logout(); //
     this.router.navigate(['/login']);
   }
 }

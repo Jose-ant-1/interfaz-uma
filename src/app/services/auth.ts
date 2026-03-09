@@ -57,6 +57,28 @@ export class AuthService {
     this.userId.set(null);
   }
 
+  actualizarCredencialesTrasCambioEmail(nuevoEmail: string, nuevoNombre: string) {
+    const authData = localStorage.getItem('authData');
+    if (!authData) return;
+
+    try {
+      const base64 = authData.replace('Basic ', '');
+      const decoded = decodeURIComponent(escape(atob(base64)));
+      const password = decoded.substring(decoded.indexOf(':') + 1);
+
+      // 1. El token SIEMPRE necesita el correo para el Basic Auth
+      const nuevoAuthHeader = 'Basic ' + btoa(unescape(encodeURIComponent(nuevoEmail.trim() + ':' + password)));
+      localStorage.setItem('authData', nuevoAuthHeader);
+
+      // 2. Pero la Signal userName debe guardar el NOMBRE real
+      localStorage.setItem('userName', nuevoNombre);
+      this.userName.set(nuevoNombre); // Esto actualiza el Aside automáticamente
+
+    } catch (e) {
+      console.error("Error al actualizar credenciales", e);
+    }
+  }
+
   // Método de utilidad para comprobar si el usuario es Admin
   isAdmin(): boolean {
     return this.userRole() === 'ADMIN';

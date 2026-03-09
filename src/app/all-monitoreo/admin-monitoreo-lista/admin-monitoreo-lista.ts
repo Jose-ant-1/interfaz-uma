@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MonitoreoService } from '../services/monitoreo.service';
+import { MonitoreoService } from '../../services/monitoreo.service';
 import { MonitoreoCard } from '../componentes-monitoreo/monitoreo-card/monitoreo-card';
 
 @Component({

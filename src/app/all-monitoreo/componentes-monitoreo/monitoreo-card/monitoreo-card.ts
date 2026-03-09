@@ -1,7 +1,7 @@
 // monitoreo-card.ts
 import { Component, inject, Input, computed } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthService } from '../../services/auth'; // Asegúrate de que la ruta es correcta
+import { AuthService } from '../../../services/auth'; // Asegúrate de que la ruta es correcta
 
 @Component({
   selector: 'app-monitoreo-card',

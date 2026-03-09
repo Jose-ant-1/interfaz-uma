@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MonitoreoService } from '../services/monitoreo.service';
+import { MonitoreoService } from '../../services/monitoreo.service';
 
 @Component({
   selector: 'app-monitoreo-detalles',

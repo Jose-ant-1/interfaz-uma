@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MonitoreoService } from '../services/monitoreo.service';
+import { MonitoreoService } from '../../services/monitoreo.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 

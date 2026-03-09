@@ -1,7 +1,6 @@
 @if (usuario(); as u) {
   <div>
     <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
-
       <div class="h-32 bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900"></div>
 
       <div class="px-8 pb-8">
@@ -13,33 +12,66 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-
           <div class="md:col-span-2 space-y-8">
-            <div>
-              <h2 class="text-3xl font-bold text-slate-900">{{ u.nombre }}</h2>
-              <p class="text-slate-500 font-medium flex items-center gap-2 mt-1">
-                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-                {{ u.email }}
-              </p>
-            </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-              <div class="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                <p class="text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-widest">Identificador</p>
-                <p class="text-xl font-bold text-slate-700">#{{ u.id }}</p>
+            @if (!editando() && !editandoPassword()) {
+              <div>
+                <h2 class="text-3xl font-bold text-slate-900">{{ u.nombre }}</h2>
+                <p class="text-slate-500 font-medium flex items-center gap-2 mt-1">
+                  <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  {{ u.email }}
+                </p>
               </div>
+            }
 
+            @else if (editando()) {
+              <div class="bg-slate-50 p-6 rounded-2xl border border-blue-100 space-y-4 animate-in fade-in duration-300">
+                <h3 class="text-xs font-bold text-blue-600 uppercase tracking-widest">Editar Información Personal</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Nombre Completo</label>
+                    <input type="text" [(ngModel)]="datosEdit().nombre"
+                           class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Correo Electrónico</label>
+                    <input type="email" [(ngModel)]="datosEdit().email"
+                           class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                  </div>
+                </div>
+                <div class="flex gap-2 pt-2">
+                  <button (click)="guardarCambios()" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 transition">Guardar</button>
+                  <button (click)="cancelarEdicion()" class="bg-white text-slate-600 border border-slate-200 px-6 py-2 rounded-lg font-bold text-sm hover:bg-slate-50 transition">Cancelar</button>
+                </div>
+              </div>
+            }
+
+            @else if (editandoPassword()) {
+              <div class="bg-slate-50 p-6 rounded-2xl border border-amber-100 space-y-4 animate-in fade-in duration-300">
+                <h3 class="text-xs font-bold text-amber-600 uppercase tracking-widest">Establecer Nueva Contraseña</h3>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Nueva Clave</label>
+                  <input type="password" [ngModel]="nuevaPassword()" (ngModelChange)="nuevaPassword.set($event)"
+                         placeholder="Introduce la nueva contraseña..."
+                         class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500 outline-none bg-white">
+                </div>
+                <div class="flex gap-2 pt-2">
+                  <button (click)="guardarPassword()" class="bg-amber-600 text-white px-6 py-2 rounded-lg font-bold text-sm hover:bg-amber-700 transition">Actualizar Clave</button>
+                  <button (click)="cancelarEdicionPassword()" class="bg-white text-slate-600 border border-slate-200 px-6 py-2 rounded-lg font-bold text-sm hover:bg-slate-50 transition">Cancelar</button>
+                </div>
+              </div>
+            }
+
+            <div class="grid grid-cols-2 gap-4 pt-4">
               <div class="p-5 bg-blue-50 rounded-2xl border border-blue-100">
-                <p class="text-[10px] uppercase font-bold text-blue-400 mb-1 tracking-widest">Mis Monitoreos</p>
+                <p class="text-[10px] uppercase font-bold text-blue-400 mb-1 tracking-widest">Monitoreos</p>
                 <div class="flex items-end gap-2">
                   <p class="text-2xl font-bold text-blue-700">{{ propiosCount() }}</p>
                   <span class="text-xs text-blue-500 mb-1 font-medium">propios</span>
                 </div>
               </div>
-
               <div class="p-5 bg-indigo-50 rounded-2xl border border-indigo-100">
                 <p class="text-[10px] uppercase font-bold text-indigo-400 mb-1 tracking-widest">Colaboraciones</p>
                 <div class="flex items-end gap-2">
@@ -47,27 +79,28 @@
                   <span class="text-xs text-indigo-500 mb-1 font-medium">invitado</span>
                 </div>
               </div>
-
             </div>
           </div>
 
           <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100 h-fit space-y-3">
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Seguridad de cuenta</h3>
-            <button class="w-full py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition shadow-lg shadow-slate-200">
+            <button (click)="activarEdicion()"
+                    [disabled]="editando() || editandoPassword()"
+                    class="w-full py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-slate-800 transition shadow-lg shadow-slate-200 disabled:opacity-50">
               Editar Perfil
             </button>
-            <button class="w-full py-3 bg-white text-slate-600 border border-slate-200 rounded-xl font-semibold hover:bg-slate-50 transition">
+            <button (click)="activarEdicionPassword()"
+                    [disabled]="editando() || editandoPassword()"
+                    class="w-full py-3 bg-white text-slate-600 border border-slate-200 rounded-xl font-semibold hover:bg-slate-50 transition disabled:opacity-50">
               Cambiar Password
             </button>
           </div>
-
         </div>
       </div>
     </div>
   </div>
 } @else {
-  <div class="flex flex-col items-center justify-center p-20">
-    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
-    <p class="text-slate-400 font-medium">Sincronizando perfil...</p>
+  <div class="flex items-center justify-center h-64">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
   </div>
 }
