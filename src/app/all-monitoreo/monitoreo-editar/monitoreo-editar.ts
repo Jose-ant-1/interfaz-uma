@@ -3,6 +3,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MonitoreoService } from '../../services/monitoreo.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { UsuarioService } from '../../services/usuario.service';
+import { Usuario } from '../../models/usuario.model';
 
 @Component({
   selector: 'app-monitoreo-editar',
@@ -14,6 +16,9 @@ export class MonitoreoEditar implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private monitoreoService = inject(MonitoreoService);
+
+  private usuarioService = inject(UsuarioService); // Inyectamos el servicio de usuarios
+  usuariosSistema = signal<Usuario[]>([]); // Todos los usuarios para la lista
 
   cargando = signal(true);
 
@@ -41,6 +46,11 @@ export class MonitoreoEditar implements OnInit {
         }
       });
     }
+
+    this.usuarioService.getUsuarios().subscribe({
+      next: (users) => this.usuariosSistema.set(users),
+      error: (err) => console.error("Error cargando usuarios", err)
+    });
   }
 
   guardar() {
@@ -62,4 +72,25 @@ export class MonitoreoEditar implements OnInit {
       }
     });
   }
+
+  // Función para saber si un usuario ya es invitado
+  esInvitado(usuarioId: number): boolean {
+    if (!this.monitoreo.invitados) return false;
+    // Comparamos numéricamente para evitar errores de tipos
+    return this.monitoreo.invitados.some((i: any) => Number(i.id) === Number(usuarioId));
+  }
+
+  // Función que se dispara al hacer clic en el checkbox
+  toggleInvitado(usuario: Usuario) {
+    this.monitoreoService.invitarUsuario(this.monitoreo.id, usuario.email).subscribe({
+      next: (res) => {
+        console.log("Invitados que vienen del servidor:", res.invitados);
+        // Forzamos la actualización de la referencia para que Angular detecte el cambio
+        this.monitoreo = { ...res };
+      }
+    });
+  }
+
+
+
 }

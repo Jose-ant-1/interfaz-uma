@@ -47,4 +47,21 @@ export class MonitoreoService {
   getPerfil(): Observable<any> {
     return this.http.get<any>('http://localhost:8080/api/usuarios/me', { headers: this.getHeaders() });
   }
+
+  // --- GESTIÓN DE INVITADOS ---
+
+  // Llama al @PutMapping("/{id}/invitar") de tu MonitoreoController
+  invitarUsuario(monitoreoId: number, email: string): Observable<MonitoreoDTODetalle> {
+    const url = `${this.apiUrl}/${monitoreoId}/invitar`;
+    // Enviamos el email en un objeto como espera el @RequestBody Map<String, String> de Java
+    return this.http.put<MonitoreoDTODetalle>(url, { email }, { headers: this.getHeaders() });
+  }
+
+  // Llama al nuevo endpoint DELETE que deberías tener para quitar el acceso
+  // Si tu back usa el mismo PUT para hacer toggle, cámbialo aquí.
+  quitarInvitado(monitoreoId: number, email: string): Observable<MonitoreoDTODetalle> {
+    const url = `${this.apiUrl}/${monitoreoId}/invitar?email=${email}`;
+    return this.http.delete<MonitoreoDTODetalle>(url, { headers: this.getHeaders() });
+  }
+
 }

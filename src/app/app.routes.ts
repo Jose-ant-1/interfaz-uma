@@ -12,6 +12,8 @@ import { PaginaAnyadir } from './all-pagina/pagina-anyadir/pagina-anyadir';
 import { PaginaEditar } from './all-pagina/pagina-editar/pagina-editar';
 import {UsuariosListComponent} from './all-usuarios/usuario-lista/usuario-lista';
 import {UsuarioAnyadir} from './all-usuarios/usuario-anyadir/usuario-anyadir';
+import {UsuarioEditar} from './all-usuarios/usuario-editar/usuario-editar';
+import {DifusionMasiva} from './difusion-masiva/difusion-masiva';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -34,8 +36,11 @@ export const routes: Routes = [
       { path: 'paginas', component: PaginaListComponent },
       { path: 'paginas/nueva', component: PaginaAnyadir },
       { path: 'paginas/editar/:id', component: PaginaEditar },
-      // app.routes.ts
+
+      // Rutas para usuarios
       { path: 'usuarios/nuevo', component: UsuarioAnyadir },
+      { path: 'usuarios/editar/:id', component: UsuarioEditar },
+      { path: 'difusion-masiva', component: DifusionMasiva}
     ]
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' }
