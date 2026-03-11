@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { PlantillaMonitoreo } from '../models/plantilla-monitoreo'; // Ajusta la ruta
 
 @Injectable({
   providedIn: 'root',
@@ -16,31 +17,33 @@ export class PlantillaMonitoreoService {
     });
   }
 
-  // Obtener todas las plantillas (útil para admin)
-  findAll(): Observable<any[]> {
-    return this.http.get<any[]>(this.apiUrl, { headers: this.getHeaders() });
+  findAll(): Observable<PlantillaMonitoreo[]> {
+    return this.http.get<PlantillaMonitoreo[]>(this.apiUrl, {headers: this.getHeaders()});
   }
 
-  // Obtener las plantillas que un usuario puede usar (las que él domina)
-  findByPropietario(usuarioId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/propietario/${usuarioId}`, { headers: this.getHeaders() });
+  // NUEVO: Método para obtener una sola plantilla por ID
+  findById(id: number): Observable<PlantillaMonitoreo> {
+    return this.http.get<PlantillaMonitoreo>(`${this.apiUrl}/${id}`, {headers: this.getHeaders()});
   }
 
-  // La joya de la corona: Aplicar la plantilla a un usuario
+  findByPropietario(usuarioId: number): Observable<PlantillaMonitoreo[]> {
+    return this.http.get<PlantillaMonitoreo[]>(`${this.apiUrl}/propietario/${usuarioId}`, {headers: this.getHeaders()});
+  }
+
+  create(plantilla: PlantillaMonitoreo): Observable<PlantillaMonitoreo> {
+    return this.http.post<PlantillaMonitoreo>(this.apiUrl, plantilla, {headers: this.getHeaders()});
+  }
+
+  // NUEVO: Método para actualizar
+  update(id: number, plantilla: PlantillaMonitoreo): Observable<PlantillaMonitoreo> {
+    return this.http.put<PlantillaMonitoreo>(`${this.apiUrl}/${id}`, plantilla, {headers: this.getHeaders()});
+  }
+
   aplicarPlantillaAUsuario(plantillaId: number, email: string): Observable<void> {
-    return this.http.post<void>(
-      `${this.apiUrl}/${plantillaId}/aplicar`,
-      { email: email },
-      { headers: this.getHeaders() }
-    );
-  }
-
-  // Métodos básicos de gestión
-  create(plantilla: any): Observable<any> {
-    return this.http.post<any>(this.apiUrl, plantilla, { headers: this.getHeaders() });
+    return this.http.post<void>(`${this.apiUrl}/${plantillaId}/aplicar`, {email}, {headers: this.getHeaders()});
   }
 
   delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
+    return this.http.delete<void>(`${this.apiUrl}/${id}`, {headers: this.getHeaders()});
   }
 }

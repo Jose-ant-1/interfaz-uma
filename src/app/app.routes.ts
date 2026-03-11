@@ -13,7 +13,13 @@ import { PaginaEditar } from './all-pagina/pagina-editar/pagina-editar';
 import {UsuariosListComponent} from './all-usuarios/usuario-lista/usuario-lista';
 import {UsuarioAnyadir} from './all-usuarios/usuario-anyadir/usuario-anyadir';
 import {UsuarioEditar} from './all-usuarios/usuario-editar/usuario-editar';
-import {DifusionMasiva} from './difusion-masiva/difusion-masiva';
+import {DifusionMasiva} from './all-difusion/difusion-masiva/difusion-masiva';
+import {PlantMonitoreoAnyadir} from './all-difusion/all-plant-monitoreo/plant-monitoreo-anyadir/plant-monitoreo-anyadir';
+import {PlantMonitoreoLista} from './all-difusion/all-plant-monitoreo/plant-monitoreo-lista/plant-monitoreo-lista';
+import {PlantMonitoreoEditar} from './all-difusion/all-plant-monitoreo/plant-monitoreo-editar/plant-monitoreo-editar';
+import {PlantUsuarioLista} from './all-difusion/all-plant-usuario/plant-usuario-lista/plant-usuario-lista';
+import {PlantUsuarioAnyadir} from './all-difusion/all-plant-usuario/plant-usuario-anyadir/plant-usuario-anyadir';
+import {PlantUsuarioEditar} from './all-difusion/all-plant-usuario/plant-usuario-editar/plant-usuario-editar';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -24,23 +30,32 @@ export const routes: Routes = [
     children: [
       { path: 'monitoreos', component: MonitoreoLista },
       { path: 'todos-monitoreos', component: AdminMonitoreoListaComponent },
-
-      // CORRECCIÓN: Cambiamos AdminMonitoreoListaComponent por UsuariosListComponent
+      //Rutas relacionadas con usuarios
       { path: 'usuarios', component: UsuariosListComponent },
-
       { path: 'perfil', component: PerfilComponent },
       { path: 'monitoreo/:id', component: MonitoreoDetalles },
       { path: 'monitoreo/edit/:id', component: MonitoreoEditar },
+      { path: 'usuarios/nuevo', component: UsuarioAnyadir },
+      { path: 'usuarios/editar/:id', component: UsuarioEditar },
 
       // Rutas para la gestión de Páginas
       { path: 'paginas', component: PaginaListComponent },
       { path: 'paginas/nueva', component: PaginaAnyadir },
       { path: 'paginas/editar/:id', component: PaginaEditar },
 
-      // Rutas para usuarios
-      { path: 'usuarios/nuevo', component: UsuarioAnyadir },
-      { path: 'usuarios/editar/:id', component: UsuarioEditar },
-      { path: 'difusion-masiva', component: DifusionMasiva}
+      // Difusión
+      { path: 'difusion-masiva', component: DifusionMasiva},
+
+      // Rutas para plantillaMonitoreo
+      { path: 'difusion/nueva-plantilla', component: PlantMonitoreoAnyadir },
+      { path: 'difusion/administrar-plantillas', component: PlantMonitoreoLista },
+      { path: 'difusion/editar-plantilla/:id', component: PlantMonitoreoEditar },
+
+      // Rutas para plantillaUsuario
+      { path: 'difusion/administrar-grupos', component: PlantUsuarioLista },
+      { path: 'difusion/nuevo-grupo', component: PlantUsuarioAnyadir },
+      { path: 'difusion/editar-grupo/:id', component: PlantUsuarioEditar },
+
     ]
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' }

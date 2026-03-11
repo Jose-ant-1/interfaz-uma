@@ -18,7 +18,7 @@ export interface MonitoreoListadoDTO {
 export interface MonitoreoDTODetalle {
   id: number;
   nombre: string;
-  minutosMonitoreo: number;
+  minutos: number;
   repeticiones: number;
   propietario: UsuarioDTO;
   ultimoEstado: number | null;
