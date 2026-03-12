@@ -22,68 +22,57 @@
         <div>
           <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nombre Identificador</label>
           <input [(ngModel)]="monitoreo.nombre" type="text"
-                 class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-semibold focus:ring-2 focus:ring-blue-400 focus:outline-none transition">
+                 class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">URL de la Página Web</label>
-          <input [(ngModel)]="monitoreo.paginaUrl" type="url"
-                 class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-semibold focus:ring-2 focus:ring-blue-400 focus:outline-none transition">
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">URL de la página</label>
+          <input [(ngModel)]="monitoreo.paginaUrl" type="url" readonly
+                 class="w-full bg-slate-100 border border-slate-200 rounded-xl p-4 text-slate-500 font-mono text-sm cursor-not-allowed">
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Frecuencia (minutos)</label>
-            <input [(ngModel)]="monitoreo.minutosMonitoreo" type="number"
-                   class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-semibold focus:ring-2 focus:ring-blue-400 focus:outline-none transition">
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Intervalo de revisión</label>
+            <div class="relative">
+              <input [(ngModel)]="monitoreo.minutos" type="number"
+                     class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition">
+              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm"></span>
+            </div>
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Intentos fallidos</label>
+            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Reintentos antes de alerta</label>
             <input [(ngModel)]="monitoreo.repeticiones" type="number"
-                   class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-semibold focus:ring-2 focus:ring-blue-400 focus:outline-none transition">
+                   class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition">
           </div>
         </div>
-      </div>
 
-      <div class="mt-12 pt-10 border-t border-slate-200">
-        <div class="mb-6">
-          <h3 class="text-xl font-bold text-slate-800">Gestión de Accesos</h3>
-          <p class="text-sm text-slate-500">Selecciona qué usuarios pueden visualizar este monitoreo</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto pr-2">
-          @for (user of usuariosSistema(); track user.id) {
-            @if (user.id !== monitoreo.propietario?.id) {
-              <div class="flex items-center justify-between p-4 bg-white rounded-xl border transition-all hover:shadow-sm"
-                   [class.border-blue-200]="esInvitado(user.id!)"
-                   [class.bg-blue-50/30]="esInvitado(user.id!)">
-
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-blue-600 font-bold border border-slate-200 uppercase">
-                  {{ user.nombre.substring(0,2) }}
+        <div class="pt-6 mt-6 border-t border-slate-100">
+          <h2 class="text-sm font-bold text-slate-900 mb-4">Gestionar Invitados</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            @for (user of usuariosSistema(); track user.id) {
+              <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <div class="flex flex-col">
+                  <span class="text-sm font-bold text-slate-700">{{ user.nombre }}</span>
+                  <span class="text-xs text-slate-400">{{ user.email }}</span>
                 </div>
-                <div class="overflow-hidden">
-                  <p class="text-sm font-bold text-slate-700 truncate">{{ user.nombre }}</p>
-                  <p class="text-[11px] text-slate-400 truncate">{{ user.email }}</p>
-                </div>
-              </div>
 
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox"
-                       [checked]="esInvitado(user.id!)"
-                       (change)="toggleInvitado(user)"
-                       class="sr-only peer">
-                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer
-                              peer-checked:after:translate-x-full peer-checked:after:border-white
-                              after:content-[''] after:absolute after:top-[2px] after:left-[2px]
-                              after:bg-white after:border-gray-300 after:border after:rounded-full
-                              after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
-                </div>
-              </label>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox"
+                         [checked]="esInvitado(user.id!)"
+                         (change)="toggleInvitado(user)"
+                         class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer
+                    peer-checked:after:translate-x-full peer-checked:after:border-white
+                    after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                    after:bg-white after:border-gray-300 after:border after:rounded-full
+                    after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                  </div>
+                </label>
               </div>
             }
-          }
+          </div>
         </div>
       </div>
     }
@@ -93,9 +82,8 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7 7-7" />
         </svg>
-        Volver
+        Cancelar y volver
       </button>
-      <p class="text-[10px] text-slate-300 uppercase tracking-widest font-bold">UMA Monitoring v2.0</p>
     </div>
   </div>
 </div>

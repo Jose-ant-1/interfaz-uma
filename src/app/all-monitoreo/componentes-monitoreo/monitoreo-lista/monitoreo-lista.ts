@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { MonitoreoService } from '../../../services/monitoreo.service';
 import { AuthService } from '../../../services/auth';
 import { MonitoreoCard } from '../monitoreo-card/monitoreo-card';
@@ -15,12 +15,33 @@ export class MonitoreoLista implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private refreshSub?: Subscription;
 
-  // Creamos dos señales separadas
   misMonitoreos = signal<any[]>([]);
   colaboraciones = signal<any[]>([]);
 
+  // NUEVO: Señal para el texto del buscador
+  filtroTexto = signal<string>('');
+
+  // NUEVO: Listas filtradas automáticamente
+  misMonitoreosFiltrados = computed(() => {
+    const term = this.filtroTexto().toLowerCase();
+    return this.misMonitoreos().filter(m =>
+      m.nombre.toLowerCase().includes(term) || m.paginaUrl.toLowerCase().includes(term)
+    );
+  });
+
+  colaboracionesFiltradas = computed(() => {
+    const term = this.filtroTexto().toLowerCase();
+    return this.colaboraciones().filter(m =>
+      m.nombre.toLowerCase().includes(term) || m.paginaUrl.toLowerCase().includes(term)
+    );
+  });
+
   userRole = this.authService.userRole;
 
+  // Método para actualizar el filtro desde el HTML
+  actualizarFiltro(event: any) {
+    this.filtroTexto.set(event.target.value);
+  }
   ngOnInit() {
     this.cargarTodo();
 

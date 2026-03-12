@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { UsuarioService } from '../../services/usuario.service';
 import { Usuario } from '../../models/usuario.model';
 import {RouterLink} from '@angular/router';
+import {debounceTime, distinctUntilChanged, Subject, switchMap} from 'rxjs';
 
 @Component({
   selector: 'app-usuarios-list',
@@ -12,12 +13,24 @@ import {RouterLink} from '@angular/router';
 })
 export class UsuariosListComponent implements OnInit {
   private usuarioService = inject(UsuarioService);
+  private buscador$ = new Subject<string>();
 
   usuarios = signal<Usuario[]>([]);
   cargando = signal(true);
 
-  ngOnInit() {
+  ngOnInit(): void {
+    this.buscador$.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(term => this.usuarioService.buscarUsuarios(term))
+    ).subscribe(data => this.usuarios.set(data));
+
     this.cargarUsuarios();
+  }
+
+  onSearch(event: Event): void {
+    const term = (event.target as HTMLInputElement).value;
+    this.buscador$.next(term);
   }
 
   cargarUsuarios() {

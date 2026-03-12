@@ -1,23 +1,27 @@
-// monitoreo-card.ts
-import { Component, inject, Input, computed } from '@angular/core';
-import { Router } from '@angular/router';
-import { AuthService } from '../../../services/auth'; // Asegúrate de que la ruta es correcta
+import { Component, inject, Input, computed, Output, EventEmitter } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../services/auth';
+import { MonitoreoService } from '../../../services/monitoreo.service'; // Inyectamos el servicio
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-monitoreo-card',
   standalone: true,
   templateUrl: './monitoreo-card.html',
+  imports: [RouterLink] // Importante para que funcionen los routerLink en el HTML
 })
 export class MonitoreoCard {
   @Input() monitoreo!: any;
   @Input() isAdmin = false;
+
+  @Output() eliminado = new EventEmitter<void>(); // Para que la lista se refresque
+
   private router = inject(Router);
   private authService = inject(AuthService);
+  private monitoreoService = inject(MonitoreoService);
 
-  // 1. Comparamos el ID del usuario logueado con el ID del propietario del monitoreo
   esPropietario = computed(() => {
     const logueadoId = this.authService.userId();
-    // En el listado el backend envía 'propietarioId'
     const propId = this.monitoreo.propietarioId;
     if (!logueadoId || !propId) return false;
     return Number(logueadoId) === Number(propId);
@@ -30,19 +34,15 @@ export class MonitoreoCard {
     return 'OFFLINE';
   });
 
-  // Métodos para los botones
-  editarMonitoreo() {
-    this.router.navigate(['/dashboard/monitoreo/edit', this.monitoreo.id]);
-  }
-
-  eliminarMonitoreo() {
+  // Método corregido para llamar al service
+  async eliminarMonitoreo(id: number) {
     if (confirm(`¿Eliminar monitoreo: ${this.monitoreo.nombre}?`)) {
-      // Aquí llamarías a tu servicio para borrar
-      console.log('Borrando monitoreo id:', this.monitoreo.id);
+      try {
+        await firstValueFrom(this.monitoreoService.eliminarMonitoreo(id));
+        this.eliminado.emit(); // Avisamos al componente padre
+      } catch (error) {
+        console.error("Error al eliminar:", error);
+      }
     }
-  }
-
-  verDetalles() {
-    this.router.navigate(['/dashboard/monitoreo', this.monitoreo.id]);
   }
 }

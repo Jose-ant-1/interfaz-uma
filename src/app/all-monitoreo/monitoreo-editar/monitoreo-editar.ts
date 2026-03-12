@@ -1,96 +1,109 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MonitoreoService } from '../../services/monitoreo.service';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UsuarioService } from '../../services/usuario.service';
 import { Usuario } from '../../models/usuario.model';
+import { MonitoreoDTODetalle } from '../../models/monitoreo.model';
+import { MonitoreoService } from '../../services/monitoreo.service';
 
 @Component({
-  selector: 'app-monitoreo-editar',
+  selector: 'app-monitoreo-editar', // 1. Corregido el selector
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './monitoreo-editar.html'
 })
-export class MonitoreoEditar implements OnInit {
+export class MonitoreoEditar implements OnInit { // 2. Corregido el nombre de la clase
+  private usuarioService = inject(UsuarioService);
+  private monitoreoService = inject(MonitoreoService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private monitoreoService = inject(MonitoreoService);
 
-  private usuarioService = inject(UsuarioService); // Inyectamos el servicio de usuarios
-  usuariosSistema = signal<Usuario[]>([]); // Todos los usuarios para la lista
-
+  usuarioLogueadoId = signal<number | null>(null);
+  usuariosSistema = signal<Usuario[]>([]);
   cargando = signal(true);
 
-  // Objeto para manejar los datos del formulario
-  monitoreo: any = {
-    id: 0,
+  monitoreo: Partial<MonitoreoDTODetalle> = {
     nombre: '',
-    paginaUrl: '',
-    minutosMonitoreo: 1,
-    repeticiones: 3
+    minutos: 1,
+    repeticiones: 3,
+    invitados: [] // Importante inicializar esto para el HTML
   };
 
   ngOnInit() {
     const id = this.route.snapshot.params['id'];
 
+    // 1. Cargamos tu perfil
+    this.usuarioService.getPerfil().subscribe({
+      next: (yo) => {
+        this.usuarioLogueadoId.set(yo.id!);
+        // 2. Cargamos usuarios filtrando para que no salgas tú
+        this.cargarUsuariosSistema();
+      }
+    });
+
+    // 3. Cargamos solo los datos del MONITOREO
     if (id) {
       this.monitoreoService.getMonitoreoPorId(Number(id)).subscribe({
         next: (data) => {
           this.monitoreo = data;
           this.cargando.set(false);
         },
-        error: (err) => {
-          console.error("Error cargando el monitoreo", err);
-          this.router.navigate(['/dashboard/monitoreos']);
-        }
+        error: () => this.router.navigate(['/dashboard/monitoreos'])
       });
     }
+  }
 
+  cargarUsuariosSistema() {
     this.usuarioService.getUsuarios().subscribe({
-      next: (users) => this.usuariosSistema.set(users),
+      next: (users) => {
+        // FILTRO: Te excluimos de la lista
+        const filtrados = users.filter(u => u.id !== this.usuarioLogueadoId());
+        this.usuariosSistema.set(filtrados);
+      },
       error: (err) => console.error("Error cargando usuarios", err)
     });
   }
 
-  guardar() {
-    const id = this.monitoreo.id;
+  // --- 3. MÉTODOS RECUPERADOS PARA LOS CHECKBOXES DEL HTML ---
+
+  esInvitado(usuarioId: number): boolean {
+    if (!this.monitoreo.invitados) return false;
+    return this.monitoreo.invitados.some((i: any) => Number(i.id) === Number(usuarioId));
+  }
+
+  toggleInvitado(usuario: Usuario) {
+    if (!this.monitoreo.id) return;
+
+    this.monitoreoService.invitarUsuario(this.monitoreo.id, usuario.email).subscribe({
+      next: () => {
+        // Actualizamos visualmente el array local para que el checkbox reaccione
+        if (this.esInvitado(usuario.id!)) {
+          this.monitoreo.invitados = this.monitoreo.invitados?.filter((i: any) => i.id !== usuario.id);
+        } else {
+          if (!this.monitoreo.invitados) this.monitoreo.invitados = [];
+          this.monitoreo.invitados.push(usuario as any);
+        }
+      },
+      error: (err) => console.error("Error al gestionar invitación", err)
+    });
+  }
+
+  // --- 4. CORREGIDO EL GUARDADO PARA QUE GUARDE EL MONITOREO ---
+
+  guardar(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+
     const payload = {
       nombre: this.monitoreo.nombre,
-      url: this.monitoreo.paginaUrl, // Verifica que esto tenga valor
-      minutos: Number(this.monitoreo.minutosMonitoreo), // Forzamos número
+      url: this.monitoreo.paginaUrl,
+      minutos: Number(this.monitoreo.minutos),
       repeticiones: Number(this.monitoreo.repeticiones)
     };
 
     this.monitoreoService.updateMonitoreo(id, payload).subscribe({
-      next: () => {
-        this.router.navigate(['/dashboard/monitoreos']);
-      },
-      error: (err) => {
-        console.error("Error al guardar", err);
-        alert("Error: No se pudo guardar. Revisa los permisos o los datos.");
-      }
+      next: () => this.router.navigate(['/dashboard/monitoreos']),
+      error: (err) => alert('Error al actualizar el monitoreo.')
     });
   }
-
-  // Función para saber si un usuario ya es invitado
-  esInvitado(usuarioId: number): boolean {
-    if (!this.monitoreo.invitados) return false;
-    // Comparamos numéricamente para evitar errores de tipos
-    return this.monitoreo.invitados.some((i: any) => Number(i.id) === Number(usuarioId));
-  }
-
-  // Función que se dispara al hacer clic en el checkbox
-  toggleInvitado(usuario: Usuario) {
-    this.monitoreoService.invitarUsuario(this.monitoreo.id, usuario.email).subscribe({
-      next: (res) => {
-        console.log("Invitados que vienen del servidor:", res.invitados);
-        // Forzamos la actualización de la referencia para que Angular detecte el cambio
-        this.monitoreo = { ...res };
-      }
-    });
-  }
-
-
-
 }

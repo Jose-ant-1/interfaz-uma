@@ -10,6 +10,18 @@ export class PaginaService {
   private http = inject(HttpClient);
   private apiUrl = 'http://localhost:8080/api/paginas';
 
+  buscarPaginas(termino: string): Observable<Pagina[]> {
+    // Si el término está vacío, llamamos a la lista completa
+    if (!termino.trim()) {
+      return this.getPaginas();
+    }
+
+    // Enviamos el término como query parameter '?q=...'
+    return this.http.get<Pagina[]>(`${this.apiUrl}/buscar?q=${termino}`, {
+      headers: this.getHeaders()
+    });
+  }
+
   // Lógica para BasicAuth (IDÉNTICA a tu MonitoreoService)
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('authData'); // Aquí guardas "usuario:password" en base64

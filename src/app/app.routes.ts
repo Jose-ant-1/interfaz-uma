@@ -20,6 +20,7 @@ import {PlantMonitoreoEditar} from './all-difusion/all-plant-monitoreo/plant-mon
 import {PlantUsuarioLista} from './all-difusion/all-plant-usuario/plant-usuario-lista/plant-usuario-lista';
 import {PlantUsuarioAnyadir} from './all-difusion/all-plant-usuario/plant-usuario-anyadir/plant-usuario-anyadir';
 import {PlantUsuarioEditar} from './all-difusion/all-plant-usuario/plant-usuario-editar/plant-usuario-editar';
+import {MonitoreoAnyadir} from './all-monitoreo/monitoreo-anyadir/monitoreo-anyadir';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -28,13 +29,16 @@ export const routes: Routes = [
     component: Layout,
     canActivate: [authGuard],
     children: [
+      // Rutas para los monitoreos
       { path: 'monitoreos', component: MonitoreoLista },
       { path: 'todos-monitoreos', component: AdminMonitoreoListaComponent },
+      { path: 'monitoreos/nuevo', component: MonitoreoAnyadir },
+      { path: 'monitoreo/:id', component: MonitoreoDetalles },
+      { path: 'monitoreo/edit/:id', component: MonitoreoEditar },
+
       //Rutas relacionadas con usuarios
       { path: 'usuarios', component: UsuariosListComponent },
       { path: 'perfil', component: PerfilComponent },
-      { path: 'monitoreo/:id', component: MonitoreoDetalles },
-      { path: 'monitoreo/edit/:id', component: MonitoreoEditar },
       { path: 'usuarios/nuevo', component: UsuarioAnyadir },
       { path: 'usuarios/editar/:id', component: UsuarioEditar },
 
