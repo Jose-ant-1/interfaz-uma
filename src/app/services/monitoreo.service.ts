@@ -1,5 +1,5 @@
 import {inject, Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {MonitoreoDTODetalle, MonitoreoListadoDTO} from '../models/monitoreo.model';
 
@@ -53,15 +53,22 @@ export class MonitoreoService {
   // Llama al @PutMapping("/{id}/invitar") de tu MonitoreoController
   invitarUsuario(monitoreoId: number, email: string): Observable<MonitoreoDTODetalle> {
     const url = `${this.apiUrl}/${monitoreoId}/invitar`;
-    // Enviamos el email en un objeto como espera el @RequestBody Map<String, String> de Java
-    return this.http.put<MonitoreoDTODetalle>(url, {email}, {headers: this.getHeaders()});
+    // Enviamos el email en el BODY, que es lo que espera el Map<String, String> del Back
+    return this.http.put<MonitoreoDTODetalle>(url, { email }, { headers: this.getHeaders() });
   }
 
   // Llama al nuevo endpoint DELETE que deberías tener para quitar el acceso
   // Si tu back usa el mismo PUT para hacer toggle, cámbialo aquí.
   quitarInvitado(monitoreoId: number, email: string): Observable<MonitoreoDTODetalle> {
-    const url = `${this.apiUrl}/${monitoreoId}/invitar?email=${email}`;
-    return this.http.delete<MonitoreoDTODetalle>(url, {headers: this.getHeaders()});
+    const url = `${this.apiUrl}/${monitoreoId}/invitar`;
+
+    // Usamos HttpParams para que Angular construya la URL como: /api/monitoreos/1/invitar?email=usuario@correo.com
+    const params = new HttpParams().set('email', email);
+
+    return this.http.delete<MonitoreoDTODetalle>(url, {
+      headers: this.getHeaders(),
+      params: params
+    });
   }
 
   obtenerTodasLasPaginas(): Observable<any[]> {

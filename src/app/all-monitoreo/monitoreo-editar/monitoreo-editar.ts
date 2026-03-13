@@ -1,11 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { UsuarioService } from '../../services/usuario.service';
-import { Usuario } from '../../models/usuario.model';
-import { MonitoreoDTODetalle } from '../../models/monitoreo.model';
-import { MonitoreoService } from '../../services/monitoreo.service';
+import {Component, OnInit, inject, signal} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {UsuarioService} from '../../services/usuario.service';
+import {Usuario} from '../../models/usuario.model';
+import {MonitoreoDTODetalle} from '../../models/monitoreo.model';
+import {MonitoreoService} from '../../services/monitoreo.service';
 
 @Component({
   selector: 'app-monitoreo-editar', // 1. Corregido el selector
@@ -73,20 +73,29 @@ export class MonitoreoEditar implements OnInit { // 2. Corregido el nombre de la
   }
 
   toggleInvitado(usuario: Usuario) {
-    if (!this.monitoreo.id) return;
+    if (!this.monitoreo.id || !usuario.email) return;
 
-    this.monitoreoService.invitarUsuario(this.monitoreo.id, usuario.email).subscribe({
-      next: () => {
-        // Actualizamos visualmente el array local para que el checkbox reaccione
-        if (this.esInvitado(usuario.id!)) {
-          this.monitoreo.invitados = this.monitoreo.invitados?.filter((i: any) => i.id !== usuario.id);
-        } else {
-          if (!this.monitoreo.invitados) this.monitoreo.invitados = [];
-          this.monitoreo.invitados.push(usuario as any);
-        }
-      },
-      error: (err) => console.error("Error al gestionar invitación", err)
-    });
+    const yaEsInvitado = this.esInvitado(usuario.id!);
+
+    if (yaEsInvitado) {
+      // LLAMADA AL DELETE
+      this.monitoreoService.quitarInvitado(this.monitoreo.id, usuario.email).subscribe({
+        next: (res) => {
+          this.monitoreo.invitados = res.invitados;
+          console.log("Invitado eliminado");
+        },
+        error: (err) => console.error("Error al eliminar", err)
+      });
+    } else {
+      // LLAMADA AL PUT
+      this.monitoreoService.invitarUsuario(this.monitoreo.id, usuario.email).subscribe({
+        next: (res) => {
+          this.monitoreo.invitados = res.invitados;
+          console.log("Invitado añadido");
+        },
+        error: (err) => console.error("Error al añadir", err)
+      });
+    }
   }
 
   // --- 4. CORREGIDO EL GUARDADO PARA QUE GUARDE EL MONITOREO ---
