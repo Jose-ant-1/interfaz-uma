@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PlantillaMonitoreo } from '../models/plantilla-monitoreo'; // Ajusta la ruta
 
@@ -46,4 +46,14 @@ export class PlantillaMonitoreoService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`, {headers: this.getHeaders()});
   }
+
+  // En plantilla-monitoreo.service.ts
+  revocarPlantillaAUsuario(plantillaId: number, email: string): Observable<void> {
+    const params = new HttpParams().set('email', email);
+    return this.http.delete<void>(`${this.apiUrl}/${plantillaId}/revocar`, {
+      headers: this.getHeaders(),
+      params: params
+    });
+  }
+
 }

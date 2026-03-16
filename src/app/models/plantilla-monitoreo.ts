@@ -4,5 +4,5 @@ export interface PlantillaMonitoreo {
   id?: number;
   nombre: string;
   monitoreos: Partial<MonitoreoListadoDTO>[];
-  propietarioId?: number;
+  propietario?: number;
 }
