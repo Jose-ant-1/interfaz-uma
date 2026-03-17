@@ -1,14 +1,14 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { PaginaService } from '../../services/pagina.service';
 import { Pagina } from '../../models/pagina.model';
 import { Subject, debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
+import {PaginaCardComponent} from '../pagina-card/pagina-card';
 
 @Component({
   selector: 'app-pagina-list',
   standalone: true,
-  imports: [CommonModule, RouterLink], // CommonModule es necesario para pipes y otros si no usas 100% nueva sintaxis
+  imports: [CommonModule, PaginaCardComponent], // CommonModule es necesario para pipes y otros si no usas 100% nueva sintaxis
   templateUrl: './pagina-lista.html'
 })
 export class PaginaListComponent implements OnInit {

@@ -30,7 +30,7 @@ export class UsuarioAnyadir {
       },
       error: (err) => {
         console.error('Error al crear usuario:', err);
-        alert('Error al guardar el usuario. Revisa que el email no esté duplicado.');
+        alert('Error al guardar el usuario. Revisa que el email o nombre no esté duplicado.');
       }
     });
   }

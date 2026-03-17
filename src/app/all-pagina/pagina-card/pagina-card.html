@@ -1,0 +1,53 @@
+<div class="group bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-sm hover:shadow-md transition-all flex items-center justify-between w-full overflow-hidden">
+
+  <div class="flex items-center gap-3 sm:gap-6 flex-1 min-w-0">
+
+    <div class="hidden xs:flex w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 text-blue-600 rounded-xl items-center justify-center font-bold text-base sm:text-lg shrink-0">
+      {{ pagina.nombre.substring(0, 1).toUpperCase() }}
+    </div>
+
+    <div class="flex-1 min-w-0">
+      <h3 class="font-bold text-slate-800 text-sm sm:text-lg leading-tight truncate">
+        {{ pagina.nombre }}
+      </h3>
+      <div class="flex items-center gap-2 mt-0.5 sm:mt-1">
+        <span class="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase font-bold shrink-0">
+          URL
+        </span>
+        <p class="text-[10px] sm:text-xs text-slate-400 font-mono truncate">
+          {{ formatearUrlVisual(pagina.url) }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2 sm:gap-4 ml-2 shrink-0">
+
+    <a [href]="prepararEnlace(pagina.url)"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="text-blue-600 hover:text-blue-700 p-2 transition-colors"
+       title="Visitar sitio">
+      <span class="hidden md:inline text-sm font-semibold mr-1">Visitar</span>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" stroke-width="2"/>
+      </svg>
+    </a>
+
+    <div class="flex items-center bg-slate-50 rounded-lg sm:rounded-xl p-0.5 sm:p-1 border border-slate-100">
+      <button [routerLink]="['/dashboard/paginas/editar', pagina.id]"
+              class="p-1.5 sm:p-2 text-slate-400 hover:text-blue-600 rounded-md transition-all">
+        <svg class="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+      </button>
+
+      <button (click)="eliminar()"
+              class="p-1.5 sm:p-2 text-slate-400 hover:text-red-600 rounded-md transition-all">
+        <svg class="w-4 h-4 sm:w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>

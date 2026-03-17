@@ -36,6 +36,24 @@ export class MonitoreoAnyadir implements OnInit {
   }
 
   async guardar() {
+
+    const nombreLimpio = this.nombre.trim();
+
+    if (!nombreLimpio || !this.urlSeleccionada) {
+      alert("Por favor, rellena todos los campos");
+      return;
+    }
+
+    // VALIDACIÓN DE NÚMEROS
+    if (this.minutos < 1) {
+      alert("La frecuencia mínima es de 1 minuto.");
+      return;
+    }
+    if (this.repeticiones < 0) {
+      alert("Los reintentos no pueden ser negativos.");
+      return;
+    }
+
     if (!this.nombre || !this.urlSeleccionada) {
       alert("Por favor, rellena todos los campos");
       return;

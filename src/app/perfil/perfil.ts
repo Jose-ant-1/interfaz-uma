@@ -67,13 +67,44 @@ export class PerfilComponent implements OnInit {
   }
 
   guardarCambios() {
-    this.usuarioService.updatePerfil(this.datosEdit()).subscribe({
+    // 1. Extraemos y limpiamos los datos (Trim)
+    const nombreLimpio = this.datosEdit().nombre?.trim();
+    const emailLimpio = this.datosEdit().email?.trim();
+
+    // 2. Expresión regular para validar el formato del email
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,4}$/;
+
+    // 3. Validación: No permitir campos vacíos tras el trim
+    if (!nombreLimpio || !emailLimpio) {
+      alert('El nombre y el email son obligatorios y no pueden contener solo espacios.');
+      return;
+    }
+
+    // 4. Validación: Formato de email
+    if (!emailRegex.test(emailLimpio)) {
+      alert('Por favor, introduce un formato de correo electrónico válido.');
+      return;
+    }
+
+    // 5. Preparamos el objeto final con los datos ya limpios
+    const datosParaEnviar: Partial<Usuario> = {
+      ...this.datosEdit(),
+      nombre: nombreLimpio,
+      email: emailLimpio
+    };
+
+    // 6. Si todo está bien, procedemos a la actualización
+    this.usuarioService.updatePerfil(datosParaEnviar).subscribe({
       next: (userActualizado) => {
+        // Actualizamos sesión y estado local
         this.authService.actualizarCredencialesTrasCambioEmail(userActualizado.email, userActualizado.nombre);
         this.usuario.set(userActualizado);
         this.editando.set(false);
       },
-      error: () => alert('Error al actualizar el perfil')
+      error: (err) => {
+        console.error("Error al actualizar:", err);
+        alert('Error: El email podría estar ya en uso o el servidor rechazó los datos.');
+      }
     });
   }
 
@@ -91,28 +122,37 @@ export class PerfilComponent implements OnInit {
   guardarPassword() {
     const userActual = this.usuario();
 
+    // 1. Usamos trim() para eliminar espacios accidentales (o malintencionados)
+    const passLimpia = this.nuevaPassword().trim();
+
     if (!userActual) return;
 
-    if (this.nuevaPassword().length < 4) {
-      alert('La contraseña debe tener al menos 4 caracteres');
+    // 2. Validamos sobre la versión LIMPIA
+    if (passLimpia.length === 0) {
+      alert('La contraseña no puede estar vacía ni contener solo espacios.');
       return;
     }
 
-    // Creamos el objeto completo para el backend
+    if (passLimpia.length < 4) {
+      alert('La contraseña debe tener al menos 4 caracteres (sin contar espacios en los extremos).');
+      return;
+    }
+
+    // 3. Creamos el objeto para enviar
     const usuarioParaActualizar: Usuario = {
-      ...userActual,             // Copiamos todo lo que ya tiene (id, nombre, email, permiso...)
-      contrasenia: this.nuevaPassword() // Añadimos la nueva contraseña
+      ...userActual,
+      contrasenia: passLimpia // Enviamos la versión ya limpia
     };
 
     this.usuarioService.updatePerfil(usuarioParaActualizar).subscribe({
       next: () => {
-        alert('Contraseña actualizada con éxito. Por seguridad, inicia sesión de nuevo.');
+        alert('Contraseña actualizada con éxito. Inicia sesión de nuevo.');
         this.authService.logout();
         window.location.href = '/login';
       },
-      error: (err: any) => {
+      error: (err) => {
         console.error("Error al actualizar pass", err);
-        alert('No se pudo actualizar la contraseña. Revisa la consola.');
+        alert(err.error || 'Error al actualizar la contraseña');
       }
     });
   }

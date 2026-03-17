@@ -48,7 +48,7 @@ export class UsuarioEditar implements OnInit {
 
     this.usuarioService.updateUsuario(id, datos).subscribe({
       next: () => this.router.navigate(['/dashboard/usuarios']),
-      error: (err) => alert('Error al actualizar. Revisa los logs del servidor.')
+      error: (err) => alert('Error al actualizar. Revisa que no se repita el nombre o el correo.')
     });
   }
 

@@ -2,18 +2,20 @@ import {Component, OnInit, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
+import {firstValueFrom} from 'rxjs'; // <-- Importante añadir esto
+
 import {UsuarioService} from '../../services/usuario.service';
 import {Usuario} from '../../models/usuario.model';
 import {MonitoreoDTODetalle} from '../../models/monitoreo.model';
 import {MonitoreoService} from '../../services/monitoreo.service';
 
 @Component({
-  selector: 'app-monitoreo-editar', // 1. Corregido el selector
+  selector: 'app-monitoreo-editar',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './monitoreo-editar.html'
 })
-export class MonitoreoEditar implements OnInit { // 2. Corregido el nombre de la clase
+export class MonitoreoEditar implements OnInit {
   private usuarioService = inject(UsuarioService);
   private monitoreoService = inject(MonitoreoService);
   private route = inject(ActivatedRoute);
@@ -22,31 +24,34 @@ export class MonitoreoEditar implements OnInit { // 2. Corregido el nombre de la
   usuarioLogueadoId = signal<number | null>(null);
   usuariosSistema = signal<Usuario[]>([]);
   cargando = signal(true);
+  guardando = signal(false); // Para bloquear el botón mientras guarda
 
   monitoreo: Partial<MonitoreoDTODetalle> = {
     nombre: '',
     minutos: 1,
     repeticiones: 3,
-    invitados: [] // Importante inicializar esto para el HTML
+    invitados: []
   };
+
+  // --- NUEVO: FOTO INICIAL DE INVITADOS ---
+  invitadosOriginales: string[] = [];
 
   ngOnInit() {
     const id = this.route.snapshot.params['id'];
 
-    // 1. Cargamos tu perfil
     this.usuarioService.getPerfil().subscribe({
       next: (yo) => {
         this.usuarioLogueadoId.set(yo.id!);
-        // 2. Cargamos usuarios filtrando para que no salgas tú
         this.cargarUsuariosSistema();
       }
     });
 
-    // 3. Cargamos solo los datos del MONITOREO
     if (id) {
       this.monitoreoService.getMonitoreoPorId(Number(id)).subscribe({
         next: (data) => {
           this.monitoreo = data;
+          // Guardamos los emails con los que empieza el monitoreo
+          this.invitadosOriginales = data.invitados?.map(i => i.email) || [];
           this.cargando.set(false);
         },
         error: () => this.router.navigate(['/dashboard/monitoreos'])
@@ -57,7 +62,6 @@ export class MonitoreoEditar implements OnInit { // 2. Corregido el nombre de la
   cargarUsuariosSistema() {
     this.usuarioService.getUsuarios().subscribe({
       next: (users) => {
-        // FILTRO: Te excluimos de la lista
         const filtrados = users.filter(u => u.id !== this.usuarioLogueadoId());
         this.usuariosSistema.set(filtrados);
       },
@@ -65,54 +69,78 @@ export class MonitoreoEditar implements OnInit { // 2. Corregido el nombre de la
     });
   }
 
-  // --- 3. MÉTODOS RECUPERADOS PARA LOS CHECKBOXES DEL HTML ---
-
   esInvitado(usuarioId: number): boolean {
     if (!this.monitoreo.invitados) return false;
     return this.monitoreo.invitados.some((i: any) => Number(i.id) === Number(usuarioId));
   }
 
+  // --- MODIFICADO: Solo edición local ---
   toggleInvitado(usuario: Usuario) {
-    if (!this.monitoreo.id || !usuario.email) return;
+    if (!this.monitoreo.invitados) this.monitoreo.invitados = [];
 
-    const yaEsInvitado = this.esInvitado(usuario.id!);
+    const index = this.monitoreo.invitados.findIndex((i: any) => i.id === usuario.id);
 
-    if (yaEsInvitado) {
-      // LLAMADA AL DELETE
-      this.monitoreoService.quitarInvitado(this.monitoreo.id, usuario.email).subscribe({
-        next: (res) => {
-          this.monitoreo.invitados = res.invitados;
-          console.log("Invitado eliminado");
-        },
-        error: (err) => console.error("Error al eliminar", err)
-      });
+    if (index > -1) {
+      // Si estaba, lo quitamos de la lista visual
+      this.monitoreo.invitados.splice(index, 1);
     } else {
-      // LLAMADA AL PUT
-      this.monitoreoService.invitarUsuario(this.monitoreo.id, usuario.email).subscribe({
-        next: (res) => {
-          this.monitoreo.invitados = res.invitados;
-          console.log("Invitado añadido");
-        },
-        error: (err) => console.error("Error al añadir", err)
+      // Si no estaba, lo añadimos (mapeado al DTO)
+      this.monitoreo.invitados.push({
+        id: usuario.id!,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        permiso: usuario.permiso || 'USUARIO'
       });
     }
   }
 
-  // --- 4. CORREGIDO EL GUARDADO PARA QUE GUARDE EL MONITOREO ---
+  // --- MODIFICADO: Guardado Masivo ---
+  async guardar() {
+    const nombreLimpio = this.monitoreo.nombre?.trim();
 
-  guardar(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    if (!nombreLimpio || this.monitoreo.minutos! < 1 || this.monitoreo.repeticiones! < 0) {
+      alert("Verifica los datos: El nombre es obligatorio, los minutos deben ser > 0 y los reintentos >= 0.");
+      return;
+    }
 
-    const payload = {
-      nombre: this.monitoreo.nombre,
-      url: this.monitoreo.paginaUrl,
-      minutos: Number(this.monitoreo.minutos),
-      repeticiones: Number(this.monitoreo.repeticiones)
-    };
+    try {
+      this.guardando.set(true);
+      const id = Number(this.route.snapshot.paramMap.get('id'));
 
-    this.monitoreoService.updateMonitoreo(id, payload).subscribe({
-      next: () => this.router.navigate(['/dashboard/monitoreos']),
-      error: (err) => alert('Error al actualizar el monitoreo.')
-    });
+      // 1. Guardar la configuración básica (Nombre, minutos, reintentos)
+      const payload = {
+        nombre: nombreLimpio,
+        url: this.monitoreo.paginaUrl,
+        minutos: Number(this.monitoreo.minutos),
+        repeticiones: Number(this.monitoreo.repeticiones)
+      };
+
+      await firstValueFrom(this.monitoreoService.updateMonitoreo(id, payload));
+
+      // 2. Calcular quién entra y quién sale
+      const invitadosFinales = this.monitoreo.invitados?.map((i: any) => i.email) || [];
+
+      const correosAAnadir = invitadosFinales.filter(email => !this.invitadosOriginales.includes(email));
+      const correosAQuitar = this.invitadosOriginales.filter(email => !invitadosFinales.includes(email));
+
+      // 3. Ejecutar peticiones de invitados (Solo si hay cambios)
+      const promesasInvitados = [
+        ...correosAAnadir.map(email => firstValueFrom(this.monitoreoService.invitarUsuario(id, email))),
+        ...correosAQuitar.map(email => firstValueFrom(this.monitoreoService.quitarInvitado(id, email)))
+      ];
+
+      if (promesasInvitados.length > 0) {
+        // Usamos allSettled para que si una falla (ej: ya estaba invitado por error) las demás sigan
+        await Promise.allSettled(promesasInvitados);
+      }
+
+      this.router.navigate(['/dashboard/monitoreos']);
+
+    } catch (error) {
+      console.error("Error al guardar:", error);
+      alert("Hubo un error al guardar los cambios.");
+    } finally {
+      this.guardando.set(false);
+    }
   }
 }

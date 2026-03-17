@@ -7,8 +7,10 @@
         <p class="text-slate-400 text-sm">Modifica los parámetros de control para esta web</p>
       </div>
       <div class="flex gap-3">
-        <button (click)="guardar()" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-md">
-          Guardar Cambios
+        <button (click)="guardar()"
+                [disabled]="guardando()"
+                class="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-md disabled:opacity-50">
+          {{ guardando() ? 'Guardando...' : 'Guardar Cambios' }}
         </button>
       </div>
     </div>
@@ -35,7 +37,7 @@
           <div>
             <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Intervalo de revisión</label>
             <div class="relative">
-              <input [(ngModel)]="monitoreo.minutos" type="number"
+              <input [(ngModel)]="monitoreo.minutos" type="number" min="1"
                      class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition">
               <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm"></span>
             </div>
@@ -43,7 +45,7 @@
 
           <div>
             <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Reintentos antes de alerta</label>
-            <input [(ngModel)]="monitoreo.repeticiones" type="number"
+            <input [(ngModel)]="monitoreo.repeticiones" type="number" min="0"
                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition">
           </div>
         </div>
