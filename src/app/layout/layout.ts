@@ -13,7 +13,6 @@ export class Layout {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  // Exponemos las señales del servicio para el HTML
   userName = this.authService.userName;
   userRole = this.authService.userRole;
 
@@ -31,7 +30,7 @@ export class Layout {
   }
 
   cerrarSesion() {
-    this.authService.logout(); //
+    this.authService.logout();
     this.router.navigate(['/login']);
   }
 }

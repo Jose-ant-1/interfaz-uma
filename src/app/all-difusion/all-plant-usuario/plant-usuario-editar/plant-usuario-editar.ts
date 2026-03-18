@@ -38,20 +38,20 @@ export class PlantUsuarioEditar implements OnInit {
     try {
       this.cargando.set(true);
 
-      // 1. Obtenemos perfil, todos los usuarios y el grupo actual en paralelo
+      // Obtenemos perfil, todos los usuarios y el grupo actual en paralelo
       const [miPerfil, todosLosUsuarios, grupo] = await Promise.all([
         firstValueFrom(this.usuarioService.getPerfil()),
         firstValueFrom(this.usuarioService.getUsuarios()),
         firstValueFrom(this.plantillaUsuarioService.findById(this.idGrupo))
       ]);
 
-      // 2. Filtramos la lista para que NO aparezcas tú (basado en el ID de tu perfil)
+      // Filtramos la lista para que NO aparezcas tú (basado en el ID de tu perfil)
       const usuariosSinMi = todosLosUsuarios.filter(u =>
         u.id !== undefined && u.id !== miPerfil.id
       );
       this.usuariosDisponibles.set(usuariosSinMi);
 
-      // 3. Cargamos los datos del grupo
+      // Cargamos los datos del grupo
       if (grupo) {
         this.nombreGrupo = grupo.nombre;
         if (grupo.usuarios) {

@@ -1,12 +1,12 @@
-import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core'; // <-- Cambia esto
+import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 import {provideHttpClient, withInterceptors} from '@angular/common/http';
-import { authInterceptor } from './auth.interceptor'; // Importa el interceptor
+import { authInterceptor } from './auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZonelessChangeDetection(), // <-- Usa esta función
+    provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(
       withInterceptors([authInterceptor]),

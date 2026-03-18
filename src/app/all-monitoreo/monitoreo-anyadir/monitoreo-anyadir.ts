@@ -17,11 +17,10 @@ export class MonitoreoAnyadir implements OnInit {
 
   // Formulario
   nombre = '';
-  urlSeleccionada = ''; // Aquí guardaremos la URL elegida del select
+  urlSeleccionada = '';
   minutos = 5;
   repeticiones = 3;
 
-  // Lista de páginas desde el Back
   paginasExistentes = signal<any[]>([]);
   cargando = signal(false);
 
@@ -62,7 +61,7 @@ export class MonitoreoAnyadir implements OnInit {
     try {
       this.cargando.set(true);
 
-      // El payload exacto que espera tu @PostMapping en MonitoreoController.java
+      // El payload exacto que espera MonitoreoController.java
       const payload = {
         nombre: this.nombre,
         url: this.urlSeleccionada, // La URL de la página seleccionada

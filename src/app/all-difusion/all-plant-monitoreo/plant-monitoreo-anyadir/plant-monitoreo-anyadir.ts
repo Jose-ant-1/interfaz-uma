@@ -1,9 +1,9 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
-import { PlantillaMonitoreoService } from '../../../services/plantilla-monitoreo.service';
-import { MonitoreoService } from '../../../services/monitoreo.service';
+import {Component, inject, signal, OnInit} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {RouterModule, Router} from '@angular/router';
+import {PlantillaMonitoreoService} from '../../../services/plantilla-monitoreo.service';
+import {MonitoreoService} from '../../../services/monitoreo.service';
 import {PlantillaMonitoreo} from '../../../models/plantilla-monitoreo';
 
 @Component({
@@ -42,14 +42,13 @@ export class PlantMonitoreoAnyadir implements OnInit {
     return this.seleccionados().includes(id);
   }
 
-// En plantilla-anyadir.ts
   guardar() {
     this.cargando.set(true);
 
     // TypeScript validará que este objeto cumple con la interfaz PlantillaMonitoreo
     const nuevaPlantilla: PlantillaMonitoreo = {
       nombre: this.nombrePlantilla,
-      monitoreos: this.seleccionados().map(id => ({ id }))
+      monitoreos: this.seleccionados().map(id => ({id}))
     };
 
     this.plantillaService.create(nuevaPlantilla).subscribe({

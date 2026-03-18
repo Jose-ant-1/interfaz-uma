@@ -18,10 +18,10 @@ export class MonitoreoLista implements OnInit, OnDestroy {
   misMonitoreos = signal<any[]>([]);
   colaboraciones = signal<any[]>([]);
 
-  // NUEVO: Señal para el texto del buscador
+  // Señal para el texto del buscador
   filtroTexto = signal<string>('');
 
-  // NUEVO: Listas filtradas automáticamente
+  // Listas filtradas automáticamente
   misMonitoreosFiltrados = computed(() => {
     const term = this.filtroTexto().toLowerCase();
     return this.misMonitoreos().filter(m =>
@@ -38,15 +38,16 @@ export class MonitoreoLista implements OnInit, OnDestroy {
 
   userRole = this.authService.userRole;
 
-  // Método para actualizar el filtro desde el HTML
+  // metodo para actualizar el filtro desde el HTML
   actualizarFiltro(event: any) {
     this.filtroTexto.set(event.target.value);
   }
   ngOnInit() {
     this.cargarTodo();
 
-    // Actualización automática cada 30 segundos para ambas listas
-    this.refreshSub = interval(30000).subscribe(() => {
+    // actualización automática cada 10 segundos para ambas listas
+    this.refreshSub = interval(10000).subscribe(() => {
+      console.log("recargada")
       this.cargarTodo();
     });
   }

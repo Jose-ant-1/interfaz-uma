@@ -1,13 +1,13 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core'; // Añadimos computed
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // ¡Importante! Añadir FormsModule
+import { FormsModule } from '@angular/forms';
 import { MonitoreoService } from '../../services/monitoreo.service';
 import { MonitoreoCard } from '../componentes-monitoreo/monitoreo-card/monitoreo-card';
 
 @Component({
   selector: 'app-admin-monitoreo-lista',
   standalone: true,
-  imports: [CommonModule, MonitoreoCard, FormsModule], // Añadimos FormsModule aquí
+  imports: [CommonModule, MonitoreoCard, FormsModule],
   templateUrl: 'admin-monitoreo-lista.html'
 })
 export class AdminMonitoreoListaComponent implements OnInit {
@@ -19,7 +19,7 @@ export class AdminMonitoreoListaComponent implements OnInit {
   // Término de búsqueda
   searchTerm = signal('');
 
-  // Lista filtrada reactiva
+  // Lista filtrada
   monitoreosFiltrados = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
     if (!term) return this.monitoreos(); // Si no hay búsqueda, devolvemos todo

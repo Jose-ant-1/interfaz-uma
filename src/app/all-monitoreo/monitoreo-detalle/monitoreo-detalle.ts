@@ -35,8 +35,7 @@ export class MonitoreoDetalles implements OnInit {
       next: (data) => {
         this.monitoreo.set(data);
 
-        // Obtenemos nuestro ID (ajusta según cómo guardes tu sesión)
-        // Por ejemplo, si guardas el ID en el localStorage al hacer login:
+        // Obtenemos nuestro ID (sesión)
         const miId = Number(localStorage.getItem('userId'));
 
         // Verificamos si mi ID coincide con el ID del propietario que viene en el DTO
@@ -46,13 +45,4 @@ export class MonitoreoDetalles implements OnInit {
     });
   }
 
-  eliminarMonitoreo() {
-    const id = this.monitoreo()?.id;
-    if (id && confirm('¿Eliminar este monitoreo permanentemente?')) {
-      this.monitoreoService.eliminarMonitoreo(id).subscribe({
-        next: () => this.router.navigate(['/dashboard/monitoreos']),
-        error: (err) => console.error("Error al eliminar:", err)
-      });
-    }
-  }
 }

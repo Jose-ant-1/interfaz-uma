@@ -17,7 +17,7 @@ export class PaginaCardComponent {
     this.onDelete.emit(this.pagina.id);
   }
 
-  // 1. SOLO PARA MOSTRAR: Quita el https:// para que no ocupe espacio visual
+  // SOLO PARA MOSTRAR: Quita el https:// para que no ocupe espacio visual
   formatearUrlVisual(url: string): string {
     return url.replace(/^https?:\/\//, '').replace(/\/$/, '');
   }

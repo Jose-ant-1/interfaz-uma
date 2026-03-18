@@ -11,7 +11,6 @@ import { Usuario } from '../../models/usuario.model';
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './usuario-editar.html'
 })
-// IMPORTANTE: Asegúrate de que el nombre sea UsuarioEditarComponent
 export class UsuarioEditar implements OnInit {
   private usuarioService = inject(UsuarioService);
   private route = inject(ActivatedRoute);

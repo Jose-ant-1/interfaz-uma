@@ -46,7 +46,6 @@ export class UsuariosListComponent implements OnInit {
     });
   }
 
-  // Nuevo método para eliminar
   eliminarUsuario(id: number) {
     if (confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) {
       this.usuarioService.eliminarUsuario(id).subscribe({

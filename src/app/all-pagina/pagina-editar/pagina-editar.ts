@@ -27,7 +27,7 @@ export class PaginaEditar implements OnInit {
   esEdicion = signal(false);
 
   ngOnInit(): void {
-    // 1. Capturamos el ID de la ruta: /dashboard/paginas/editar/:id
+    // Capturamos el ID de la ruta
     const id = this.route.snapshot.params['id'];
 
     if (id) {
@@ -42,13 +42,13 @@ export class PaginaEditar implements OnInit {
 
   guardar(): void {
     if (this.esEdicion()) {
-      // 3. Si es edición, usamos el método updatePagina de tu servicio
+      // Si es edición, usamos el updatePagina
       this.paginaService.updatePagina(this.pagina().id, this.pagina()).subscribe({
         next: () => this.router.navigate(['/dashboard/paginas']),
         error: (err) => alert('Error al actualizar la página')
       });
     } else {
-      // 4. Si es creación, usamos createPagina
+      // Si es creación, usamos createPagina
       this.paginaService.createPagina(this.pagina()).subscribe({
         next: () => this.router.navigate(['/dashboard/paginas']),
         error: (err) => alert('Error al crear la página')

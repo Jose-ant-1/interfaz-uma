@@ -34,11 +34,11 @@ export class PlantMonitoreoEditar implements OnInit {
     try {
       this.cargando.set(true);
 
-      // 1. Cargamos monitoreos disponibles
+      // Cargamos monitoreos disponibles
       const monitoreos = await firstValueFrom(this.monitoreoService.getMisMonitoreos());
       this.misMonitoreosDisponibles.set(monitoreos);
 
-      // 2. BUSCAMOS LA PLANTILLA (Usando findAll porque findById no existe en tu service)
+      // BUSCAMOS LA PLANTILLA
       const todas = await firstValueFrom(this.plantillaService.findAll());
       const plantilla = todas.find(p => p.id === this.idPlantilla);
 
@@ -46,7 +46,6 @@ export class PlantMonitoreoEditar implements OnInit {
         this.nombrePlantilla = plantilla.nombre;
 
         // Mapeamos los monitoreos actuales
-        // Nota: Tu modelo Java dice que PlantillaMonitoreo tiene un Set<Monitoreo> llamado 'monitoreos'
         if (plantilla.monitoreos) {
           const idsActuales = Array.from(plantilla.monitoreos).map((m: any) => m.id);
           this.seleccionados.set(idsActuales);
@@ -78,14 +77,12 @@ export class PlantMonitoreoEditar implements OnInit {
     try {
       this.cargando.set(true);
 
-      // Construimos el objeto respetando la interfaz de tu modelo
       const payload: any = {
         id: this.idPlantilla,
         nombre: this.nombrePlantilla,
         monitoreos: this.seleccionados().map(id => ({ id })) // Formato para ManyToMany en JPA
       };
 
-      // Usamos el método update que sí existe en tu plantilla-monitoreo.service.ts
       await firstValueFrom(this.plantillaService.update(this.idPlantilla, payload));
       this.router.navigate(['/dashboard/difusion/administrar-plantillas']);
     } catch (error) {

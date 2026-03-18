@@ -22,9 +22,8 @@ export class PaginaService {
     });
   }
 
-  // Lógica para BasicAuth (IDÉNTICA a tu MonitoreoService)
   private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('authData'); // Aquí guardas "usuario:password" en base64
+    const token = localStorage.getItem('authData');
     return new HttpHeaders({
       'Authorization': token?.startsWith('Basic ') ? token : `Basic ${token}`
     });

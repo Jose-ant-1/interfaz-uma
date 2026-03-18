@@ -2,8 +2,7 @@ import {Component, OnInit, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
-import {firstValueFrom} from 'rxjs'; // <-- Importante añadir esto
-
+import {firstValueFrom} from 'rxjs';
 import {UsuarioService} from '../../services/usuario.service';
 import {Usuario} from '../../models/usuario.model';
 import {MonitoreoDTODetalle} from '../../models/monitoreo.model';
@@ -33,7 +32,6 @@ export class MonitoreoEditar implements OnInit {
     invitados: []
   };
 
-  // --- NUEVO: FOTO INICIAL DE INVITADOS ---
   invitadosOriginales: string[] = [];
 
   ngOnInit() {
@@ -74,7 +72,6 @@ export class MonitoreoEditar implements OnInit {
     return this.monitoreo.invitados.some((i: any) => Number(i.id) === Number(usuarioId));
   }
 
-  // --- MODIFICADO: Solo edición local ---
   toggleInvitado(usuario: Usuario) {
     if (!this.monitoreo.invitados) this.monitoreo.invitados = [];
 
@@ -94,7 +91,6 @@ export class MonitoreoEditar implements OnInit {
     }
   }
 
-  // --- MODIFICADO: Guardado Masivo ---
   async guardar() {
     const nombreLimpio = this.monitoreo.nombre?.trim();
 
@@ -107,7 +103,7 @@ export class MonitoreoEditar implements OnInit {
       this.guardando.set(true);
       const id = Number(this.route.snapshot.paramMap.get('id'));
 
-      // 1. Guardar la configuración básica (Nombre, minutos, reintentos)
+      // Guardar la configuración básica (Nombre, minutos, reintentos)
       const payload = {
         nombre: nombreLimpio,
         url: this.monitoreo.paginaUrl,
@@ -117,13 +113,13 @@ export class MonitoreoEditar implements OnInit {
 
       await firstValueFrom(this.monitoreoService.updateMonitoreo(id, payload));
 
-      // 2. Calcular quién entra y quién sale
+      // Calcular quién entra y quién sale
       const invitadosFinales = this.monitoreo.invitados?.map((i: any) => i.email) || [];
 
       const correosAAnadir = invitadosFinales.filter(email => !this.invitadosOriginales.includes(email));
       const correosAQuitar = this.invitadosOriginales.filter(email => !invitadosFinales.includes(email));
 
-      // 3. Ejecutar peticiones de invitados (Solo si hay cambios)
+      // Ejecutar peticiones de invitados (Solo si hay cambios)
       const promesasInvitados = [
         ...correosAAnadir.map(email => firstValueFrom(this.monitoreoService.invitarUsuario(id, email))),
         ...correosAQuitar.map(email => firstValueFrom(this.monitoreoService.quitarInvitado(id, email)))

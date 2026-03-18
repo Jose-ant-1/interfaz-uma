@@ -29,20 +29,20 @@ export const routes: Routes = [
     component: Layout,
     canActivate: [authGuard],
     children: [
-      // Rutas para los monitoreos
+      // monitoreos
       { path: 'monitoreos', component: MonitoreoLista },
       { path: 'todos-monitoreos', component: AdminMonitoreoListaComponent },
       { path: 'monitoreos/nuevo', component: MonitoreoAnyadir },
       { path: 'monitoreo/:id', component: MonitoreoDetalles },
       { path: 'monitoreo/edit/:id', component: MonitoreoEditar },
 
-      //Rutas relacionadas con usuarios
+      // usuarios
       { path: 'usuarios', component: UsuariosListComponent },
       { path: 'perfil', component: PerfilComponent },
       { path: 'usuarios/nuevo', component: UsuarioAnyadir },
       { path: 'usuarios/editar/:id', component: UsuarioEditar },
 
-      // Rutas para la gestión de Páginas
+      // Páginas
       { path: 'paginas', component: PaginaListComponent },
       { path: 'paginas/nueva', component: PaginaAnyadir },
       { path: 'paginas/editar/:id', component: PaginaEditar },
@@ -50,12 +50,12 @@ export const routes: Routes = [
       // Difusión
       { path: 'difusion-masiva', component: DifusionMasiva},
 
-      // Rutas para plantillaMonitoreo
+      // plantillaMonitoreo
       { path: 'difusion/nueva-plantilla', component: PlantMonitoreoAnyadir },
       { path: 'difusion/administrar-plantillas', component: PlantMonitoreoLista },
       { path: 'difusion/editar-plantilla/:id', component: PlantMonitoreoEditar },
 
-      // Rutas para plantillaUsuario
+      // plantillaUsuario
       { path: 'difusion/administrar-grupos', component: PlantUsuarioLista },
       { path: 'difusion/nuevo-grupo', component: PlantUsuarioAnyadir },
       { path: 'difusion/editar-grupo/:id', component: PlantUsuarioEditar },

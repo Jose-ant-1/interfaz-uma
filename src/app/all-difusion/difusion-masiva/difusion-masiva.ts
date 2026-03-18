@@ -73,8 +73,6 @@ export class DifusionMasiva implements OnInit {
       this.cargando.set(true);
       const miPerfil = await firstValueFrom(this.usuarioService.getPerfil());
 
-      // VALIDACIÓN Y MAPEADO: Convertimos miPerfil a UsuarioDTO
-      // para que el Signal no se queje del 'id'
       if (miPerfil.id === undefined) {
         throw new Error("ID no encontrado");
       }
@@ -86,11 +84,8 @@ export class DifusionMasiva implements OnInit {
         permiso: miPerfil.permiso || 'USUARIO'
       });
 
-      // Ahora miId es garantizadamente un number
-      const miId = miPerfil.id;
-
       const [pMon, pUsu, users, mons] = await Promise.all([
-        firstValueFrom(this.plantillaService.findByPropietario(miId)),
+        firstValueFrom(this.plantillaService.findByPropietario(miPerfil.id)),
         firstValueFrom(this.plantillaUsuarioService.findAll()),
         firstValueFrom(this.usuarioService.getUsuarios()),
         firstValueFrom(this.monitoreoService.getMisMonitoreos())
@@ -152,7 +147,7 @@ export class DifusionMasiva implements OnInit {
         }
       }
 
-      // SEGURIDAD: Filtrar para que el usuario no se invite a sí mismo
+      // Filtrar para que el usuario no se invite a sí mismo
       const emailsFiltrados = emailsDestino.filter(email => email !== miPerfil.email);
 
       if (emailsDestino.length > 0 && emailsFiltrados.length === 0) {
@@ -165,7 +160,7 @@ export class DifusionMasiva implements OnInit {
         return;
       }
 
-      // 2. DETERMINAR MONITOREOS AFECTADOS
+      // DETERMINAR MONITOREOS AFECTADOS
       let idsMonitoreos: number[] = [];
 
       if (this.esModoMonitoreoUnico()) {
@@ -184,7 +179,7 @@ export class DifusionMasiva implements OnInit {
         return;
       }
 
-      // 3. EJECUCIÓN (Usamos allSettled para que no se detenga si uno ya existe/no existe)
+      // Usamos allSettled para que no se detenga si uno ya existe/no existe
       const promesas = emailsFiltrados.flatMap(email =>
         idsMonitoreos.map(idMon =>
           this.accion() === 'ASIGNAR'

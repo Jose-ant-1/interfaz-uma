@@ -58,7 +58,7 @@
                     (ngModelChange)="idPlantillaSeleccionada.set($event)">
               <option [value]="null" disabled>Selecciona una plantilla...</option>
               @for (p of plantillas(); track p.id) {
-                <option [value]="p.id">{{ p.nombre }} ({{ p.monitoreos?.length }} monitoreos)</option>
+                <option [value]="p.id">{{ p.nombre }} ({{ p.monitoreos.length }} monitoreos)</option>
               }
             </select>
 
@@ -108,7 +108,7 @@
                     (ngModelChange)="idPlantillaUsuarioSeleccionada.set($event)">
               <option [value]="null" disabled>Selecciona un grupo...</option>
               @for (pu of plantillasUsuario(); track pu.id) {
-                <option [value]="pu.id">{{ pu.nombre }} ({{ pu.usuarios?.length }} personas)</option>
+                <option [value]="pu.id">{{ pu.nombre }} ({{ pu.usuarios.length }} personas)</option>
               }
             </select>
             <div class="flex justify-end gap-3 mt-1 px-1">

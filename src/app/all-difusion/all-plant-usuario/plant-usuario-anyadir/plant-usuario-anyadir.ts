@@ -29,23 +29,18 @@ export class PlantUsuarioAnyadir implements OnInit {
     try {
       this.cargando.set(true);
 
-      // 1. Obtenemos el perfil y la lista de usuarios en paralelo para ganar velocidad
+      // Obtenemos el perfil y la lista de usuarios en paralelo para ganar velocidad
       const [miPerfil, todosLosUsuarios] = await Promise.all([
         firstValueFrom(this.usuarioService.getPerfil()),
         firstValueFrom(this.usuarioService.getUsuarios())
       ]);
 
-      // 2. Filtramos con una comprobación extra de seguridad
       // Solo incluimos usuarios que tengan ID y cuyo ID no sea el nuestro
       const listaSinMi = todosLosUsuarios.filter(u =>
         u.id !== undefined && u.id !== miPerfil.id
       );
 
       this.usuariosDisponibles.set(listaSinMi);
-
-      // Si estás en el componente de EDITAR, aquí llamarías también a cargar los datos del grupo
-      // const idParam = this.route.snapshot.paramMap.get('id');
-      // if (idParam) await this.cargarDatosGrupo(Number(idParam));
 
     } catch (error) {
       console.error("Error al inicializar el componente:", error);
@@ -74,7 +69,6 @@ export class PlantUsuarioAnyadir implements OnInit {
 
     const nuevoGrupo: PlantillaUsuario = {
       nombre: this.nombreGrupo,
-      // Mapeamos los IDs a objetos parciales que el backend espera
       usuarios: this.seleccionados().map(id => ({ id }))
     };
 

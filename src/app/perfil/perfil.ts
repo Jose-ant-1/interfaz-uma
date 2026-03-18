@@ -26,7 +26,7 @@ export class PerfilComponent implements OnInit {
   editando = signal(false);
   datosEdit = signal<Partial<Usuario>>({ nombre: '', email: '' });
 
-  // NUEVO: Control de edición de Password
+  // Control de edición de Password
   editandoPassword = signal(false);
   nuevaPassword = signal(''); // Empezará siempre vacío por seguridad
 
@@ -52,7 +52,6 @@ export class PerfilComponent implements OnInit {
     });
   }
 
-  // --- LÓGICA PERFIL ---
   activarEdicion() {
     const userActual = this.usuario();
     if (userActual) {
@@ -67,33 +66,33 @@ export class PerfilComponent implements OnInit {
   }
 
   guardarCambios() {
-    // 1. Extraemos y limpiamos los datos (Trim)
+    // Extraemos y limpiamos los datos (Trim)
     const nombreLimpio = this.datosEdit().nombre?.trim();
     const emailLimpio = this.datosEdit().email?.trim();
 
-    // 2. Expresión regular para validar el formato del email
+    // Expresión regular para validar el formato del email
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,4}$/;
 
-    // 3. Validación: No permitir campos vacíos tras el trim
+    // Validación: No permitir campos vacíos tras el trim
     if (!nombreLimpio || !emailLimpio) {
       alert('El nombre y el email son obligatorios y no pueden contener solo espacios.');
       return;
     }
 
-    // 4. Validación: Formato de email
+    // Validación: Formato de email
     if (!emailRegex.test(emailLimpio)) {
       alert('Por favor, introduce un formato de correo electrónico válido.');
       return;
     }
 
-    // 5. Preparamos el objeto final con los datos ya limpios
+    // Preparamos el objeto final con los datos ya limpios
     const datosParaEnviar: Partial<Usuario> = {
       ...this.datosEdit(),
       nombre: nombreLimpio,
       email: emailLimpio
     };
 
-    // 6. Si todo está bien, procedemos a la actualización
+    // Si todo está bien, procedemos a la actualización
     this.usuarioService.updatePerfil(datosParaEnviar).subscribe({
       next: (userActualizado) => {
         // Actualizamos sesión y estado local
@@ -108,7 +107,6 @@ export class PerfilComponent implements OnInit {
     });
   }
 
-  // --- LÓGICA PASSWORD ---
   activarEdicionPassword() {
     this.nuevaPassword.set(''); // Siempre vacía al empezar
     this.editando.set(false);   // Cerramos la otra edición
@@ -122,12 +120,12 @@ export class PerfilComponent implements OnInit {
   guardarPassword() {
     const userActual = this.usuario();
 
-    // 1. Usamos trim() para eliminar espacios accidentales (o malintencionados)
+    // Usamos trim() para eliminar espacios accidentales (o malintencionados)
     const passLimpia = this.nuevaPassword().trim();
 
     if (!userActual) return;
 
-    // 2. Validamos sobre la versión LIMPIA
+    // Validamos sobre la versión LIMPIA
     if (passLimpia.length === 0) {
       alert('La contraseña no puede estar vacía ni contener solo espacios.');
       return;
@@ -138,7 +136,7 @@ export class PerfilComponent implements OnInit {
       return;
     }
 
-    // 3. Creamos el objeto para enviar
+    // Creamos el objeto para enviar
     const usuarioParaActualizar: Usuario = {
       ...userActual,
       contrasenia: passLimpia // Enviamos la versión ya limpia

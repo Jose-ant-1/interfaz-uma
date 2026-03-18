@@ -17,7 +17,6 @@ export class MonitoreoService {
     });
   }
 
-  // Listados principales
   obtenerTodosLosMonitoreos(): Observable<MonitoreoListadoDTO[]> {
     return this.http.get<MonitoreoListadoDTO[]>(`${this.apiUrl}/all`, {headers: this.getHeaders()});
   }
@@ -30,7 +29,6 @@ export class MonitoreoService {
     return this.http.get<MonitoreoListadoDTO[]>(`${this.apiUrl}/colaboraciones`, {headers: this.getHeaders()});
   }
 
-  // Detalle y configuración
   getMonitoreoPorId(id: number): Observable<MonitoreoDTODetalle> {
     return this.http.get<MonitoreoDTODetalle>(`${this.apiUrl}/${id}`, {headers: this.getHeaders()});
   }
@@ -43,22 +41,16 @@ export class MonitoreoService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`, {headers: this.getHeaders()});
   }
 
-  // Usuario y Perfil
   getPerfil(): Observable<any> {
     return this.http.get<any>('http://localhost:8080/api/usuarios/me', {headers: this.getHeaders()});
   }
 
-  // --- GESTIÓN DE INVITADOS ---
-
-  // Llama al @PutMapping("/{id}/invitar") de tu MonitoreoController
   invitarUsuario(monitoreoId: number, email: string): Observable<MonitoreoDTODetalle> {
     const url = `${this.apiUrl}/${monitoreoId}/invitar`;
     // Enviamos el email en el BODY, que es lo que espera el Map<String, String> del Back
     return this.http.put<MonitoreoDTODetalle>(url, { email }, { headers: this.getHeaders() });
   }
 
-  // Llama al nuevo endpoint DELETE que deberías tener para quitar el acceso
-  // Si tu back usa el mismo PUT para hacer toggle, cámbialo aquí.
   quitarInvitado(monitoreoId: number, email: string): Observable<MonitoreoDTODetalle> {
     const url = `${this.apiUrl}/${monitoreoId}/invitar`;
 

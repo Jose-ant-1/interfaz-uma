@@ -1,14 +1,14 @@
 import { Component, inject, Input, computed, Output, EventEmitter } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth';
-import { MonitoreoService } from '../../../services/monitoreo.service'; // Inyectamos el servicio
+import { MonitoreoService } from '../../../services/monitoreo.service';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-monitoreo-card',
   standalone: true,
   templateUrl: './monitoreo-card.html',
-  imports: [RouterLink] // Importante para que funcionen los routerLink en el HTML
+  imports: [RouterLink]
 })
 export class MonitoreoCard {
   @Input() monitoreo!: any;
@@ -16,7 +16,6 @@ export class MonitoreoCard {
 
   @Output() eliminado = new EventEmitter<void>(); // Para que la lista se refresque
 
-  private router = inject(Router);
   private authService = inject(AuthService);
   private monitoreoService = inject(MonitoreoService);
 
