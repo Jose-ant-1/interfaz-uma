@@ -18,6 +18,14 @@
           {{ formatearUrlVisual(pagina.url) }}
         </p>
       </div>
+
+      @if (pagina.notaInfo) {
+        <div class="mt-2 flex items-start gap-1.5">
+          <p class="text-xs text-slate-500 italic line-clamp-2">
+            {{ pagina.notaInfo }}
+          </p>
+        </div>
+      }
     </div>
   </div>
 

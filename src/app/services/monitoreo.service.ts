@@ -71,4 +71,30 @@ export class MonitoreoService {
     return this.http.post<MonitoreoDTODetalle>(this.apiUrl, payload, {headers: this.getHeaders()});
   }
 
+  invitacionEnMasa(ids: number[], emails: string[]): Observable<void> {
+    const url = `${this.apiUrl}/invitar`;
+
+    // Convertimos la lista de emails a un string separado por comas para el @RequestParam
+    const params = new HttpParams().set('emails', emails.join(','));
+
+    // Enviamos la lista de IDs directamente como el cuerpo (Body) de la petición
+    return this.http.put<void>(url, ids, {
+      headers: this.getHeaders(),
+      params: params
+    });
+  }
+
+  quitarEnMasa(ids: number[], emails: string[]): Observable<void> {
+    const url = `${this.apiUrl}/invitar`;
+
+    const params = new HttpParams().set('emails', emails.join(','));
+
+    // En DELETE, el body se pasa dentro del objeto de opciones
+    return this.http.delete<void>(url, {
+      headers: this.getHeaders(),
+      params: params,
+      body: ids
+    });
+  }
+
 }

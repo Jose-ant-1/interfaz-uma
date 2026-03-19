@@ -130,45 +130,29 @@ export class DifusionMasiva implements OnInit {
 
   // --- LÓGICA PRINCIPAL ---
 
+
   async ejecutarDifusion() {
     try {
       this.cargando.set(true);
-      const miPerfil = await firstValueFrom(this.usuarioService.getPerfil());
 
-      // 1. DETERMINAR EMAILS DESTINO
-      let emailsDestino: string[] = [];
-      if (this.esModoGrupo()) {
-        const grupo = this.plantillaUsuarioElegida();
-        emailsDestino = grupo?.usuarios?.map(u => u.email).filter((e): e is string => !!e) ?? [];
-      } else {
-        const emailIndividual = this.emailUsuarioDestino();
-        if (emailIndividual) {
-          emailsDestino = [emailIndividual];
-        }
-      }
+      // 1. Obtener los emails de destino (lista de strings)
+      const emailsFiltrados: string[] = this.esModoGrupo()
+        ? (this.plantillaUsuarioElegida()?.usuarios?.map(u => u.email)
+          .filter((e): e is string => !!e) ?? []) // Esto elimina null, undefined y ""
+        : [this.emailUsuarioDestino()].filter((e): e is string => !!e);
 
-      // Filtrar para que el usuario no se invite a sí mismo
-      const emailsFiltrados = emailsDestino.filter(email => email !== miPerfil.email);
-
-      if (emailsDestino.length > 0 && emailsFiltrados.length === 0) {
-        alert("No puedes realizar esta acción sobre tu propio usuario.");
+      if (!emailsFiltrados.length) {
+        alert("No hay usuarios válidos seleccionados.");
         return;
       }
 
-      if (emailsFiltrados.length === 0) {
-        alert("No hay destinatarios válidos.");
-        return;
-      }
-
-      // DETERMINAR MONITOREOS AFECTADOS
+      // 2. Obtener los IDs de los monitoreos (lista de numbers)
       let idsMonitoreos: number[] = [];
-
       if (this.esModoMonitoreoUnico()) {
         const idUnico = this.idMonitoreoUnicoSeleccionado();
         if (idUnico) idsMonitoreos = [idUnico];
       } else {
         const plantilla = this.plantillaElegida();
-        // Mapeamos los IDs de la plantilla (ya sabemos que son del usuario)
         idsMonitoreos = plantilla?.monitoreos
           ?.map(m => m.id)
           .filter((id): id is number => id !== undefined) ?? [];
@@ -179,27 +163,28 @@ export class DifusionMasiva implements OnInit {
         return;
       }
 
-      // Usamos allSettled para que no se detenga si uno ya existe/no existe
-      const promesas = emailsFiltrados.flatMap(email =>
-        idsMonitoreos.map(idMon =>
-          this.accion() === 'ASIGNAR'
-            ? firstValueFrom(this.monitoreoService.invitarUsuario(idMon, email))
-            : firstValueFrom(this.monitoreoService.quitarInvitado(idMon, email))
-        )
-      );
+      // --- CAMBIO CLAVE: UNA SOLA LLAMADA ---
+      // En lugar de hacer .map() y Promise.all, enviamos las listas completas
+      if (this.accion() === 'ASIGNAR') {
+        // Asumimos que tu monitoreoService.invitar ahora acepta (number[], string[])
+        await firstValueFrom(this.monitoreoService.invitacionEnMasa(idsMonitoreos, emailsFiltrados));
+      } else {
+        // Asumimos que tu monitoreoService.quitar ahora acepta (number[], string[])
+        await firstValueFrom(this.monitoreoService.quitarEnMasa(idsMonitoreos, emailsFiltrados));
+      }
 
-      await Promise.allSettled(promesas);
-
-      alert(`${this.accion() === 'ASIGNAR' ? 'Proceso de asignación' : 'Proceso de revocación'} finalizado.`);
+      alert(`${this.accion() === 'ASIGNAR' ? 'Asignación' : 'Revocación'} masiva completada con éxito.`);
       this.limpiarSeleccion();
 
     } catch (error) {
       console.error("Error crítico en la difusión:", error);
-      alert("Ocurrió un error inesperado al procesar la solicitud.");
+      alert("Ocurrió un error al procesar la solicitud masiva.");
     } finally {
       this.cargando.set(false);
     }
   }
+
+
 
   private limpiarSeleccion() {
     this.idPlantillaSeleccionada.set(null);

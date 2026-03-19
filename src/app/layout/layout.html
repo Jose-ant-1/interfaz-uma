@@ -15,7 +15,7 @@
     [class.translate-x-0]="menuAbierto()"
   >
 
-    <div class="p-6 text-xl font-bold border-b border-slate-800 text-blue-400">
+    <div routerLink="/dashboard/monitoreos" class="p-6 text-xl font-bold border-b border-slate-800 text-blue-400">
       UMA Panel
     </div>
 
@@ -95,7 +95,7 @@
           ☰
         </button>
 
-        <h2 class="text-sm md:text-lg font-medium text-slate-700">
+        <h2 routerLink="/dashboard/monitoreos" class="text-sm md:text-lg font-medium text-slate-700">
           Monitoreo De Páginas
         </h2>
       </div>
@@ -105,20 +105,22 @@
 
 
         <button routerLink="/dashboard/paginas/nueva"
-                class="bg-slate-600 text-white px-2 md:px-3 py-2 rounded-lg text-[11px] md:text-sm font-bold hover:bg-slate-700 transition">
-          + Página
+                class="bg-slate-600 text-white px-3 py-2 rounded-lg text-[11px] md:text-sm font-bold hover:bg-slate-700 transition">
+          <span class="md:hidden">+ Pág.</span>
+          <span class="hidden md:inline">+ Página</span>
         </button>
 
-
         <button routerLink="/dashboard/monitoreos/nuevo"
-                class="bg-blue-600 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-bold hover:bg-blue-700 transition">
-          + Monitoreo
+                class="bg-blue-600 text-white px-3 py-2 rounded-lg text-[11px] md:text-sm font-bold hover:bg-blue-700 transition">
+          <span class="md:hidden">+ Mon.</span>
+          <span class="hidden md:inline">+ Monitoreo</span>
         </button>
 
         @if (esAdmin()) {
           <button routerLink="/dashboard/usuarios/nuevo"
-                  class="hidden md:block bg-indigo-900 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-950 transition">
-            + Usuario
+                  class="bg-indigo-900 text-white px-3 py-2 rounded-lg text-[11px] md:text-sm font-bold hover:bg-indigo-950 transition">
+            <span class="md:hidden">+ Usu.</span>
+            <span class="hidden md:inline">+ Usuario</span>
           </button>
         }
 

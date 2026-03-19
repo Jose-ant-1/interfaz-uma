@@ -21,6 +21,7 @@ import {PlantUsuarioLista} from './all-difusion/all-plant-usuario/plant-usuario-
 import {PlantUsuarioAnyadir} from './all-difusion/all-plant-usuario/plant-usuario-anyadir/plant-usuario-anyadir';
 import {PlantUsuarioEditar} from './all-difusion/all-plant-usuario/plant-usuario-editar/plant-usuario-editar';
 import {MonitoreoAnyadir} from './all-monitoreo/monitoreo-anyadir/monitoreo-anyadir';
+import {roleGuard} from './guards/role.guard';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -31,16 +32,16 @@ export const routes: Routes = [
     children: [
       // monitoreos
       { path: 'monitoreos', component: MonitoreoLista },
-      { path: 'todos-monitoreos', component: AdminMonitoreoListaComponent },
+      { path: 'todos-monitoreos', component: AdminMonitoreoListaComponent, canActivate:[roleGuard]  },
       { path: 'monitoreos/nuevo', component: MonitoreoAnyadir },
       { path: 'monitoreo/:id', component: MonitoreoDetalles },
       { path: 'monitoreo/edit/:id', component: MonitoreoEditar },
 
       // usuarios
-      { path: 'usuarios', component: UsuariosListComponent },
+      { path: 'usuarios', component: UsuariosListComponent, canActivate:[roleGuard] },
       { path: 'perfil', component: PerfilComponent },
-      { path: 'usuarios/nuevo', component: UsuarioAnyadir },
-      { path: 'usuarios/editar/:id', component: UsuarioEditar },
+      { path: 'usuarios/nuevo', component: UsuarioAnyadir, canActivate:[roleGuard]  },
+      { path: 'usuarios/editar/:id', component: UsuarioEditar, canActivate:[roleGuard]  },
 
       // Páginas
       { path: 'paginas', component: PaginaListComponent },

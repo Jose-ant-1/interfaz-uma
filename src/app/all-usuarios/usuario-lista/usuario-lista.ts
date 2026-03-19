@@ -4,11 +4,12 @@ import { UsuarioService } from '../../services/usuario.service';
 import { Usuario } from '../../models/usuario.model';
 import {RouterLink} from '@angular/router';
 import {debounceTime, distinctUntilChanged, Subject, switchMap} from 'rxjs';
+import {UsuarioCardComponent} from '../usuario-card/usuario-card';
 
 @Component({
   selector: 'app-usuarios-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, UsuarioCardComponent],
   templateUrl: './usuario-lista.html'
 })
 export class UsuariosListComponent implements OnInit {

@@ -91,50 +91,54 @@ export class MonitoreoEditar implements OnInit {
     }
   }
 
+// monitoreo-editar.ts
+
   async guardar() {
-    const nombreLimpio = this.monitoreo.nombre?.trim();
-
-    if (!nombreLimpio || this.monitoreo.minutos! < 1 || this.monitoreo.repeticiones! < 0) {
-      alert("Verifica los datos: El nombre es obligatorio, los minutos deben ser > 0 y los reintentos >= 0.");
-      return;
-    }
-
     try {
+      const nombreLimpio = this.monitoreo.nombre?.trim();
+      if (!nombreLimpio) {
+        alert('El nombre es obligatorio');
+        return;
+      }
+
       this.guardando.set(true);
       const id = Number(this.route.snapshot.paramMap.get('id'));
 
-      // Guardar la configuración básica (Nombre, minutos, reintentos)
+      // 1. Guardar la configuración básica
       const payload = {
         nombre: nombreLimpio,
         url: this.monitoreo.paginaUrl,
         minutos: Number(this.monitoreo.minutos),
         repeticiones: Number(this.monitoreo.repeticiones)
       };
-
       await firstValueFrom(this.monitoreoService.updateMonitoreo(id, payload));
 
-      // Calcular quién entra y quién sale
-      const invitadosFinales = this.monitoreo.invitados?.map((i: any) => i.email) || [];
+      // 2. Calcular quién entra y quién sale
+      // Extraemos emails y filtramos nulos/undefined para evitar el error de tipos
+      const invitadosFinales: string[] = this.monitoreo.invitados
+        ?.map((i: any) => i.email)
+        .filter((e): e is string => !!e) || [];
 
       const correosAAnadir = invitadosFinales.filter(email => !this.invitadosOriginales.includes(email));
       const correosAQuitar = this.invitadosOriginales.filter(email => !invitadosFinales.includes(email));
 
-      // Ejecutar peticiones de invitados (Solo si hay cambios)
-      const promesasInvitados = [
-        ...correosAAnadir.map(email => firstValueFrom(this.monitoreoService.invitarUsuario(id, email))),
-        ...correosAQuitar.map(email => firstValueFrom(this.monitoreoService.quitarInvitado(id, email)))
-      ];
+      // --- CAMBIO CLAVE: LLAMADAS MASIVAS ---
 
-      if (promesasInvitados.length > 0) {
-        // Usamos allSettled para que si una falla (ej: ya estaba invitado por error) las demás sigan
-        await Promise.allSettled(promesasInvitados);
+      // Si hay correos para añadir, enviamos una sola petición para este ID
+      if (correosAAnadir.length > 0) {
+        await firstValueFrom(this.monitoreoService.invitacionEnMasa([id], correosAAnadir));
+      }
+
+      // Si hay correos para quitar, enviamos una sola petición para este ID
+      if (correosAQuitar.length > 0) {
+        await firstValueFrom(this.monitoreoService.quitarEnMasa([id], correosAQuitar));
       }
 
       this.router.navigate(['/dashboard/monitoreos']);
 
     } catch (error) {
       console.error("Error al guardar:", error);
-      alert("Hubo un error al guardar los cambios.");
+      alert("Error al guardar los cambios");
     } finally {
       this.guardando.set(false);
     }

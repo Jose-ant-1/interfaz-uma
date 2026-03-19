@@ -64,7 +64,7 @@ export class MonitoreoAnyadir implements OnInit {
       // El payload exacto que espera MonitoreoController.java
       const payload = {
         nombre: this.nombre,
-        url: this.urlSeleccionada, // La URL de la página seleccionada
+        paginaUrl: this.urlSeleccionada, // La URL de la página seleccionada
         minutos: this.minutos,
         repeticiones: this.repeticiones
       };
