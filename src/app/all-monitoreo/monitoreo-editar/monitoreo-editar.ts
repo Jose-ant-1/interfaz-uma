@@ -91,8 +91,6 @@ export class MonitoreoEditar implements OnInit {
     }
   }
 
-// monitoreo-editar.ts
-
   async guardar() {
     try {
       const nombreLimpio = this.monitoreo.nombre?.trim();
@@ -104,7 +102,7 @@ export class MonitoreoEditar implements OnInit {
       this.guardando.set(true);
       const id = Number(this.route.snapshot.paramMap.get('id'));
 
-      // 1. Guardar la configuración básica
+      // Guardar la configuración básica
       const payload = {
         nombre: nombreLimpio,
         url: this.monitoreo.paginaUrl,
@@ -113,16 +111,13 @@ export class MonitoreoEditar implements OnInit {
       };
       await firstValueFrom(this.monitoreoService.updateMonitoreo(id, payload));
 
-      // 2. Calcular quién entra y quién sale
-      // Extraemos emails y filtramos nulos/undefined para evitar el error de tipos
+      // Calcular quién entra y quién sale
       const invitadosFinales: string[] = this.monitoreo.invitados
         ?.map((i: any) => i.email)
         .filter((e): e is string => !!e) || [];
 
       const correosAAnadir = invitadosFinales.filter(email => !this.invitadosOriginales.includes(email));
       const correosAQuitar = this.invitadosOriginales.filter(email => !invitadosFinales.includes(email));
-
-      // --- CAMBIO CLAVE: LLAMADAS MASIVAS ---
 
       // Si hay correos para añadir, enviamos una sola petición para este ID
       if (correosAAnadir.length > 0) {

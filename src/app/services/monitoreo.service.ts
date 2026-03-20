@@ -41,28 +41,6 @@ export class MonitoreoService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`, {headers: this.getHeaders()});
   }
 
-  getPerfil(): Observable<any> {
-    return this.http.get<any>('http://localhost:8080/api/usuarios/me', {headers: this.getHeaders()});
-  }
-
-  invitarUsuario(monitoreoId: number, email: string): Observable<MonitoreoDTODetalle> {
-    const url = `${this.apiUrl}/${monitoreoId}/invitar`;
-    // Enviamos el email en el BODY, que es lo que espera el Map<String, String> del Back
-    return this.http.put<MonitoreoDTODetalle>(url, { email }, { headers: this.getHeaders() });
-  }
-
-  quitarInvitado(monitoreoId: number, email: string): Observable<MonitoreoDTODetalle> {
-    const url = `${this.apiUrl}/${monitoreoId}/invitar`;
-
-    // Usamos HttpParams para que Angular construya la URL como: /api/monitoreos/1/invitar?email=usuario@correo.com
-    const params = new HttpParams().set('email', email);
-
-    return this.http.delete<MonitoreoDTODetalle>(url, {
-      headers: this.getHeaders(),
-      params: params
-    });
-  }
-
   obtenerTodasLasPaginas(): Observable<any[]> {
     return this.http.get<any[]>('http://localhost:8080/api/paginas', {headers: this.getHeaders()});
   }
@@ -74,7 +52,7 @@ export class MonitoreoService {
   invitacionEnMasa(ids: number[], emails: string[]): Observable<void> {
     const url = `${this.apiUrl}/invitar`;
 
-    // Convertimos la lista de emails a un string separado por comas para el @RequestParam
+    // Convertimos la lista de emails a un string separado por comas
     const params = new HttpParams().set('emails', emails.join(','));
 
     // Enviamos la lista de IDs directamente como el cuerpo (Body) de la petición

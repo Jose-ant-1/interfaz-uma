@@ -1,15 +1,15 @@
-<div class="max-w-4xl mx-auto p-8">
-  <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
+<div class="max-w-4xl mx-auto p-4 sm:p-8">
+  <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 border border-slate-100">
 
-    <div class="flex justify-between items-center mb-8 pb-6 border-b border-slate-100">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 pb-6 border-b border-slate-100 gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900">Configurar Monitoreo</h1>
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Configurar Monitoreo</h1>
         <p class="text-slate-400 text-sm">Modifica los parámetros de control para esta web</p>
       </div>
-      <div class="flex gap-3">
+      <div class="flex w-full sm:w-auto gap-3">
         <button (click)="guardar()"
                 [disabled]="guardando()"
-                class="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-md disabled:opacity-50">
+                class="flex-1 sm:flex-none px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-md disabled:opacity-50">
           {{ guardando() ? 'Guardando...' : 'Guardar Cambios' }}
         </button>
       </div>
@@ -24,40 +24,41 @@
         <div>
           <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nombre Identificador</label>
           <input [(ngModel)]="monitoreo.nombre" type="text"
-                 class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition">
+                 class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition">
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">URL de la página</label>
-          <input [(ngModel)]="monitoreo.paginaUrl" type="url" readonly
-                 class="w-full bg-slate-100 border border-slate-200 rounded-xl p-4 text-slate-500 font-mono text-sm cursor-not-allowed">
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Intervalo de revisión</label>
-            <div class="relative">
-              <input [(ngModel)]="monitoreo.minutos" type="number" min="1"
-                     class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition">
-              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm"></span>
-            </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Frecuencia (minutos)</label>
+            <input [(ngModel)]="monitoreo.minutos" type="number"
+                   class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+            <p class="text-[10px] text-slate-400 mt-2 italic">Tiempo entre cada revisión automática.</p>
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Reintentos antes de alerta</label>
-            <input [(ngModel)]="monitoreo.repeticiones" type="number" min="0"
-                   class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 text-slate-900 font-bold focus:outline-none focus:border-blue-500 transition">
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Reintentos permitidos</label>
+            <input [(ngModel)]="monitoreo.repeticiones" type="number"
+                   class="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+            <p class="text-[10px] text-slate-400 mt-2 italic">Número de fallos antes de enviar alerta.</p>
           </div>
         </div>
 
-        <div class="pt-6 mt-6 border-t border-slate-100">
-          <h2 class="text-sm font-bold text-slate-900 mb-4">Gestionar Invitados</h2>
+        <div class="mt-8">
+          <div class="flex items-center gap-2 mb-4">
+            <h2 class="text-sm font-black text-slate-700 uppercase tracking-widest">Colaboradores con acceso</h2>
+            <span class="bg-blue-100 text-blue-600 text-xs px-2 py-0.5 rounded-full font-bold">
+              {{ usuariosSistema().length }} disponibles
+            </span>
+          </div>
+
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             @for (user of usuariosSistema(); track user.id) {
-              <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
-                <div class="flex flex-col">
-                  <span class="text-sm font-bold text-slate-700">{{ user.nombre }}</span>
-                  <span class="text-xs text-slate-400">{{ user.email }}</span>
+              <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-all group">
+                <div class="flex items-center gap-3 overflow-hidden">
+                  <div class="flex flex-col min-w-0">
+                    <span class="text-sm font-bold text-slate-700 truncate">{{ user.nombre }}</span>
+                    <span class="text-[10px] text-slate-400 truncate">{{ user.email }}</span>
+                  </div>
                 </div>
 
                 <label class="relative inline-flex items-center cursor-pointer">
@@ -79,13 +80,19 @@
       </div>
     }
 
-    <div class="mt-10 pt-6 border-t border-slate-50 flex justify-between items-center">
-      <button routerLink="/dashboard/monitoreos" class="text-slate-400 hover:text-slate-600 flex items-center gap-2 transition font-medium">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7 7-7" />
+    <div class="mt-10 pt-6 border-t border-slate-50 flex flex-col sm:flex-row justify-between items-center gap-6">
+      <button routerLink="/dashboard/monitoreos" class="w-full sm:w-auto text-slate-400 hover:text-slate-600 flex items-center justify-center gap-2 transition font-medium text-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
-        Cancelar y volver
+        Volver al listado
       </button>
+
+      <div class="flex items-center gap-2 text-slate-300 text-[10px] uppercase font-bold tracking-tighter">
+        <span>UMA Security Cloud</span>
+        <span class="w-1 h-1 bg-slate-200 rounded-full"></span>
+        <span>Configuración v2.0</span>
+      </div>
     </div>
   </div>
 </div>

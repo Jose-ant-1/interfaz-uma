@@ -17,7 +17,4 @@ export class UsuarioCardComponent {
     this.onDelete.emit(this.usuario.id);
   }
 
-  getInicial(): string {
-    return this.usuario.nombre.substring(0, 1).toUpperCase();
-  }
 }

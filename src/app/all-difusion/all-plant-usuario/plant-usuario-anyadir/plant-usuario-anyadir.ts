@@ -5,7 +5,6 @@ import { RouterModule, Router } from '@angular/router';
 import { PlantillaUsuarioService } from '../../../services/plantilla-usuario.service';
 import { UsuarioService } from '../../../services/usuario.service';
 import { PlantillaUsuario } from '../../../models/plantilla-usuario';
-import { UsuarioDTO } from '../../../models/monitoreo.model';
 import { Usuario } from '../../../models/usuario.model';
 import {firstValueFrom} from 'rxjs';
 

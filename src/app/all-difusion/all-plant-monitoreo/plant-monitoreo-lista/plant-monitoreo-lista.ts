@@ -25,8 +25,10 @@ export class PlantMonitoreoLista implements OnInit {
   async cargarPlantillas() {
     try {
       this.cargando.set(true);
-      const perfil = await firstValueFrom(this.monitoreoService.getPerfil());
-      const data = await firstValueFrom(this.plantillaService.findByPropietario(perfil.id));
+
+      const data = await firstValueFrom(this.plantillaService.findAll());
+
+      console.log("Nuevos datos recibidos:", data);
       this.plantillas.set(data);
     } catch (error) {
       console.error("Error al cargar plantillas", error);

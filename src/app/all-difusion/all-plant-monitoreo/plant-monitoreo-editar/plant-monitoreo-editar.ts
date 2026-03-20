@@ -80,7 +80,7 @@ export class PlantMonitoreoEditar implements OnInit {
       const payload: any = {
         id: this.idPlantilla,
         nombre: this.nombrePlantilla,
-        monitoreos: this.seleccionados().map(id => ({ id })) // Formato para ManyToMany en JPA
+        monitoreos: this.seleccionados().map(id => ({ id }))
       };
 
       await firstValueFrom(this.plantillaService.update(this.idPlantilla, payload));

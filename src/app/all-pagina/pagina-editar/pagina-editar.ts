@@ -32,7 +32,7 @@ export class PaginaEditar implements OnInit {
 
     if (id) {
       this.esEdicion.set(true);
-      // 2. Cargamos los datos actuales de la página desde el backend
+      // Cargamos los datos actuales de la página desde el backend
       this.paginaService.getPaginaById(+id).subscribe({
         next: (data) => this.pagina.set(data),
         error: () => this.router.navigate(['/dashboard/paginas'])

@@ -1,4 +1,3 @@
-// auth.ts
 import { inject, Injectable, signal } from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import { catchError, tap } from 'rxjs';

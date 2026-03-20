@@ -163,13 +163,11 @@ export class DifusionMasiva implements OnInit {
         return;
       }
 
-      // --- CAMBIO CLAVE: UNA SOLA LLAMADA ---
-      // En lugar de hacer .map() y Promise.all, enviamos las listas completas
       if (this.accion() === 'ASIGNAR') {
-        // Asumimos que tu monitoreoService.invitar ahora acepta (number[], string[])
+
         await firstValueFrom(this.monitoreoService.invitacionEnMasa(idsMonitoreos, emailsFiltrados));
       } else {
-        // Asumimos que tu monitoreoService.quitar ahora acepta (number[], string[])
+
         await firstValueFrom(this.monitoreoService.quitarEnMasa(idsMonitoreos, emailsFiltrados));
       }
 

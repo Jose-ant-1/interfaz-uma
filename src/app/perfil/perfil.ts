@@ -92,7 +92,7 @@ export class PerfilComponent implements OnInit {
       email: emailLimpio
     };
 
-    // Si todo está bien, procedemos a la actualización
+    // Si todo esta bien, procedemos a la actualización
     this.usuarioService.updatePerfil(datosParaEnviar).subscribe({
       next: (userActualizado) => {
         // Actualizamos sesión y estado local
