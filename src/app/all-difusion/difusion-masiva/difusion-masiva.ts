@@ -9,9 +9,10 @@ import {UsuarioService} from '../../services/usuario.service';
 import {MonitoreoService} from '../../services/monitoreo.service';
 import {PlantillaUsuarioService} from '../../services/plantilla-usuario.service';
 
-import {UsuarioDTO, MonitoreoListadoDTO} from '../../models/monitoreo.model';
+import {MonitoreoListadoDTO} from '../../models/monitoreo.model';
 import {PlantillaMonitoreo} from '../../models/plantilla-monitoreo';
 import {PlantillaUsuario} from '../../models/plantilla-usuario';
+import {UsuarioDTO} from '../../models/usuario.model';
 
 @Component({
   selector: 'app-difusion-masiva',
@@ -77,12 +78,7 @@ export class DifusionMasiva implements OnInit {
         throw new Error("ID no encontrado");
       }
 
-      this.miPerfilLogueado.set({
-        id: miPerfil.id,
-        nombre: miPerfil.nombre,
-        email: miPerfil.email,
-        permiso: miPerfil.permiso || 'USUARIO'
-      });
+      this.miPerfilLogueado.set(miPerfil as UsuarioDTO);
 
       const [pMon, pUsu, users, mons] = await Promise.all([
         firstValueFrom(this.plantillaService.findByPropietario(miPerfil.id)),
@@ -150,7 +146,7 @@ export class DifusionMasiva implements OnInit {
       let idsMonitoreos: number[] = [];
       if (this.esModoMonitoreoUnico()) {
         const idUnico = this.idMonitoreoUnicoSeleccionado();
-        if (idUnico) idsMonitoreos = [idUnico];
+        if (idUnico) idsMonitoreos = [Number(idUnico)];
       } else {
         const plantilla = this.plantillaElegida();
         idsMonitoreos = plantilla?.monitoreos

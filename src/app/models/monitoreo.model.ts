@@ -1,9 +1,4 @@
-export interface UsuarioDTO {
-  id: number;
-  nombre: string;
-  email: string;
-  permiso: string;
-}
+import {UsuarioDTO} from './usuario.model';
 
 export interface MonitoreoListadoDTO {
   id: number;

@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MonitoreoService } from '../../services/monitoreo.service';
+import {MonitoreoDTODetalle} from '../../models/monitoreo.model';
 
 @Component({
   selector: 'app-monitoreo-detalles',
@@ -15,7 +16,7 @@ export class MonitoreoDetalles implements OnInit {
   private monitoreoService = inject(MonitoreoService);
 
   // Signal con el tipo MonitoreoDTODetalle
-  monitoreo = signal<any>(null);
+  monitoreo = signal<MonitoreoDTODetalle | null>(null);
   isAdmin = signal<boolean>(false);
   esDuenio = signal<boolean>(false);
 

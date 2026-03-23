@@ -9,7 +9,7 @@ import {UsuarioCardComponent} from '../usuario-card/usuario-card';
 @Component({
   selector: 'app-usuarios-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, UsuarioCardComponent],
+  imports: [CommonModule, UsuarioCardComponent],
   templateUrl: './usuario-lista.html'
 })
 export class UsuariosListComponent implements OnInit {

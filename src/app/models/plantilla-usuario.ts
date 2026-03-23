@@ -1,4 +1,4 @@
-import { UsuarioDTO } from './monitoreo.model';
+import { UsuarioDTO } from './usuario.model';
 
 export interface PlantillaUsuario {
   id?: number;

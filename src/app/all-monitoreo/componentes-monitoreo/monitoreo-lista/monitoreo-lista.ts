@@ -3,6 +3,7 @@ import { MonitoreoService } from '../../../services/monitoreo.service';
 import { AuthService } from '../../../services/auth';
 import { MonitoreoCard } from '../monitoreo-card/monitoreo-card';
 import { interval, Subscription, forkJoin } from 'rxjs';
+import {MonitoreoListadoDTO} from '../../../models/monitoreo.model';
 
 @Component({
   selector: 'app-monitoreo-lista',
@@ -15,8 +16,8 @@ export class MonitoreoLista implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private refreshSub?: Subscription;
 
-  misMonitoreos = signal<any[]>([]);
-  colaboraciones = signal<any[]>([]);
+  misMonitoreos = signal<MonitoreoListadoDTO[]>([]);
+  colaboraciones = signal<MonitoreoListadoDTO[]>([]);
 
   // Señal para el texto del buscador
   filtroTexto = signal<string>('');

@@ -6,6 +6,7 @@ import { PlantillaUsuarioService } from '../../../services/plantilla-usuario.ser
 import { UsuarioService } from '../../../services/usuario.service';
 import { Usuario } from '../../../models/usuario.model';
 import { firstValueFrom } from 'rxjs';
+import {PlantillaUsuario} from '../../../models/plantilla-usuario';
 
 @Component({
   selector: 'app-plant-usuario-editar',
@@ -86,13 +87,13 @@ export class PlantUsuarioEditar implements OnInit {
     try {
       this.cargando.set(true);
 
-      const payload = {
+      const payload: PlantillaUsuario = {
         id: this.idGrupo,
         nombre: this.nombreGrupo,
         usuarios: this.seleccionados().map(id => ({ id }))
       };
 
-      await firstValueFrom(this.plantillaUsuarioService.update(this.idGrupo, payload as any));
+      await firstValueFrom(this.plantillaUsuarioService.update(this.idGrupo, payload));
       this.router.navigate(['/dashboard/difusion/administrar-grupos']);
     } catch (error) {
       console.error("Error al actualizar el grupo:", error);

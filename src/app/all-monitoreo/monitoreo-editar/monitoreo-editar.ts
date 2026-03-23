@@ -4,7 +4,7 @@ import {FormsModule} from '@angular/forms';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
 import {firstValueFrom} from 'rxjs';
 import {UsuarioService} from '../../services/usuario.service';
-import {Usuario} from '../../models/usuario.model';
+import {Usuario, UsuarioDTO} from '../../models/usuario.model';
 import {MonitoreoDTODetalle} from '../../models/monitoreo.model';
 import {MonitoreoService} from '../../services/monitoreo.service';
 
@@ -75,7 +75,7 @@ export class MonitoreoEditar implements OnInit {
   toggleInvitado(usuario: Usuario) {
     if (!this.monitoreo.invitados) this.monitoreo.invitados = [];
 
-    const index = this.monitoreo.invitados.findIndex((i: any) => i.id === usuario.id);
+    const index = this.monitoreo.invitados.findIndex((i: UsuarioDTO) => i.id === usuario.id);
 
     if (index > -1) {
       // Si estaba, lo quitamos de la lista visual

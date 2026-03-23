@@ -16,8 +16,8 @@ export class UsuarioEditar implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
-  usuarioOriginal: Usuario | null = null;
-  usuarioEdit = signal<Partial<Usuario>>({});
+  // Usamos null como estado inicial para que el @if del HTML funcione correctamente
+  usuario = signal<Usuario | null>(null);
   cargando = signal(true);
 
   ngOnInit() {
@@ -25,8 +25,8 @@ export class UsuarioEditar implements OnInit {
     if (id) {
       this.usuarioService.getUsuarioById(id).subscribe({
         next: (data) => {
-          this.usuarioOriginal = data;
-          this.usuarioEdit.set({ ...data, contrasenia: '' });
+          // Inicializamos la contraseña vacía para el formulario
+          this.usuario.set({ ...data, contrasenia: '' });
           this.cargando.set(false);
         },
         error: () => this.router.navigate(['/dashboard/usuarios'])
@@ -35,24 +35,18 @@ export class UsuarioEditar implements OnInit {
   }
 
   guardar(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    const currentUsuario = this.usuario();
+    if (!currentUsuario || !currentUsuario.id) return;
 
-    // Enviamos solo lo que tenemos en el formulario
-    const datos = {
-      nombre: this.usuarioEdit().nombre,
-      email: this.usuarioEdit().email,
-      permiso: this.usuarioEdit().permiso,
-      contrasenia: this.usuarioEdit().contrasenia // Puede ir vacío
-    };
+    this.cargando.set(true); // Reutilizamos el estado de carga para el feedback del botón
 
-    this.usuarioService.updateUsuario(id, datos).subscribe({
+    // Enviamos el objeto directamente, ya que 'usuario()' tiene la estructura correcta
+    this.usuarioService.updateUsuario(currentUsuario.id, currentUsuario).subscribe({
       next: () => this.router.navigate(['/dashboard/usuarios']),
-      error: (err) => alert('Error al actualizar. Revisa que no se repita el nombre o el correo.')
+      error: (err) => {
+        this.cargando.set(false);
+        alert('Error al actualizar. Revisa que no se repita el nombre o el correo.');
+      }
     });
   }
-
-
-
-
-
 }

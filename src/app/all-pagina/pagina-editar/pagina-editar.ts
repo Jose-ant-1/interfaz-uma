@@ -17,12 +17,7 @@ export class PaginaEditar implements OnInit {
   private route = inject(ActivatedRoute);
 
   // Signal para manejar los datos del formulario
-  pagina = signal<Pagina>({
-    id: 0,
-    nombre: '',
-    url: '',
-    notaInfo: ''
-  });
+  pagina = signal<Pagina | null>(null);
 
   esEdicion = signal(false);
 
@@ -41,15 +36,18 @@ export class PaginaEditar implements OnInit {
   }
 
   guardar(): void {
+    const data = this.pagina();
+    if (!data) return; // Si por alguna razón es nulo, no hacemos nada
+
     if (this.esEdicion()) {
       // Si es edición, usamos el updatePagina
-      this.paginaService.updatePagina(this.pagina().id, this.pagina()).subscribe({
+      this.paginaService.updatePagina(data.id, data).subscribe({
         next: () => this.router.navigate(['/dashboard/paginas']),
         error: (err) => alert('Error al actualizar la página')
       });
     } else {
       // Si es creación, usamos createPagina
-      this.paginaService.createPagina(this.pagina()).subscribe({
+      this.paginaService.createPagina(data).subscribe({
         next: () => this.router.navigate(['/dashboard/paginas']),
         error: (err) => alert('Error al crear la página')
       });

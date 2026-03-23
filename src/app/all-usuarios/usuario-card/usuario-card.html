@@ -1,18 +1,14 @@
 <div class="group bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-all flex items-center justify-between w-full overflow-hidden">
 
   <div class="flex items-center gap-4 flex-1 min-w-0">
-    <div class="hidden xs:flex w-10 h-10 sm:w-12 sm:h-12 bg-indigo-50 text-indigo-600 rounded-xl items-center justify-center font-bold text-base sm:text-lg shrink-0">
-      {{ usuario.nombre.substring(0, 1).toUpperCase() }}
-    </div>
-
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2">
         <h3 class="font-bold text-slate-800 text-base sm:text-lg leading-tight truncate">
-          {{ usuario.nombre }}
+          {{ usuario().nombre }}
         </h3>
         <span [class]="'text-[10px] px-2 py-0.5 rounded-full font-black uppercase ' +
-          (usuario.permiso === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600')">
-          {{ usuario.permiso }}
+          (usuario().permiso === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600')">
+          {{ usuario().permiso }}
         </span>
       </div>
 
@@ -21,7 +17,7 @@
           <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <p class="text-xs sm:text-sm text-slate-500 truncate">
-          {{ usuario.email }}
+          {{ usuario().email }}
         </p>
       </div>
     </div>
@@ -31,7 +27,7 @@
 
     <div class="flex items-center bg-slate-50 rounded-xl p-1 border border-slate-100">
 
-      <button [routerLink]="['/dashboard/usuarios/editar', usuario.id]"
+      <button [routerLink]="['/dashboard/usuarios/editar', usuario().id]"
               class="p-2 text-slate-400 hover:text-blue-600 rounded-lg transition-all"
               title="Editar usuario">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

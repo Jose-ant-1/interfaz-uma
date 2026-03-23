@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MonitoreoService } from '../../services/monitoreo.service';
 import { firstValueFrom } from 'rxjs';
+import {Pagina} from '../../models/pagina.model';
 
 @Component({
   selector: 'app-monitoreo-anyadir',
@@ -21,7 +22,7 @@ export class MonitoreoAnyadir implements OnInit {
   minutos = 5;
   repeticiones = 3;
 
-  paginasExistentes = signal<any[]>([]);
+  paginasExistentes = signal<Pagina[]>([]);
   cargando = signal(false);
 
   async ngOnInit() {

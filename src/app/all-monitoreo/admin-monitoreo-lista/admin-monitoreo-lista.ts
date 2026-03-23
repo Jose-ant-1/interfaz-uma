@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MonitoreoService } from '../../services/monitoreo.service';
 import { MonitoreoCard } from '../componentes-monitoreo/monitoreo-card/monitoreo-card';
+import {MonitoreoListadoDTO} from '../../models/monitoreo.model';
 
 @Component({
   selector: 'app-admin-monitoreo-lista',
@@ -14,7 +15,7 @@ export class AdminMonitoreoListaComponent implements OnInit {
   private monitoreoService = inject(MonitoreoService);
 
   // Lista original que viene del servidor
-  monitoreos = signal<any[]>([]);
+  monitoreos = signal<MonitoreoListadoDTO[]>([]);
 
   // Término de búsqueda
   searchTerm = signal('');

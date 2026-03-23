@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PlantillaUsuarioService } from '../../../services/plantilla-usuario.service';
 import { firstValueFrom } from 'rxjs';
+import {PlantillaUsuario} from '../../../models/plantilla-usuario';
 
 @Component({
   selector: 'app-plant-usuario-lista',
@@ -13,7 +14,7 @@ import { firstValueFrom } from 'rxjs';
 export class PlantUsuarioLista implements OnInit {
   private readonly plantillaUsuarioService = inject(PlantillaUsuarioService);
 
-  plantillas = signal<any[]>([]);
+  plantillas = signal<PlantillaUsuario[]>([]);
   cargando = signal(true);
 
   async ngOnInit() {

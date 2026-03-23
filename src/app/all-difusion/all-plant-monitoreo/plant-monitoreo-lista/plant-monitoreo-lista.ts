@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { PlantillaMonitoreoService } from '../../../services/plantilla-monitoreo.service';
 import { MonitoreoService } from '../../../services/monitoreo.service';
 import { firstValueFrom } from 'rxjs';
+import {PlantillaMonitoreo} from '../../../models/plantilla-monitoreo';
 
 @Component({
   selector: 'app-plantilla-monitoreo-lista',
@@ -13,9 +14,8 @@ import { firstValueFrom } from 'rxjs';
 })
 export class PlantMonitoreoLista implements OnInit {
   private readonly plantillaService = inject(PlantillaMonitoreoService);
-  private readonly monitoreoService = inject(MonitoreoService);
 
-  plantillas = signal<any[]>([]);
+  plantillas = signal<PlantillaMonitoreo[]>([]);
   cargando = signal(true);
 
   async ngOnInit() {

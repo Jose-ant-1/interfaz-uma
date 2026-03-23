@@ -5,6 +5,7 @@ import {RouterModule, Router} from '@angular/router';
 import {PlantillaMonitoreoService} from '../../../services/plantilla-monitoreo.service';
 import {MonitoreoService} from '../../../services/monitoreo.service';
 import {PlantillaMonitoreo} from '../../../models/plantilla-monitoreo';
+import {MonitoreoListadoDTO} from '../../../models/monitoreo.model';
 
 @Component({
   selector: 'app-plantilla-anyadir',
@@ -18,25 +19,24 @@ export class PlantMonitoreoAnyadir implements OnInit {
   private router = inject(Router);
 
   nombrePlantilla = '';
-  misMonitoreos = signal<any[]>([]);
+  misMonitoreos = signal<MonitoreoListadoDTO[]>([]);
   seleccionados = signal<number[]>([]);
   cargando = signal(false);
 
   ngOnInit() {
-    // Cargamos los monitoreos del usuario para que pueda elegir
     this.monitoreoService.getMisMonitoreos().subscribe(res => {
       this.misMonitoreos.set(res);
     });
   }
 
   toggleMonitoreo(id: number) {
-    const actual = this.seleccionados();
-    if (actual.includes(id)) {
-      this.seleccionados.set(actual.filter(i => i !== id));
-    } else {
-      this.seleccionados.set([...actual, id]);
-    }
+    this.seleccionados.update(actual =>
+      actual.includes(id)
+        ? actual.filter(i => i !== id)
+        : [...actual, id]
+    );
   }
+
 
   estaSeleccionado(id: number) {
     return this.seleccionados().includes(id);
@@ -44,11 +44,10 @@ export class PlantMonitoreoAnyadir implements OnInit {
 
   guardar() {
     this.cargando.set(true);
-
-    // TypeScript validará que este objeto cumple con la interfaz PlantillaMonitoreo
+    // Esto ya lo tenías bien, es el camino a seguir:
     const nuevaPlantilla: PlantillaMonitoreo = {
       nombre: this.nombrePlantilla,
-      monitoreos: this.seleccionados().map(id => ({id}))
+      monitoreos: this.seleccionados().map(id => ({ id }))
     };
 
     this.plantillaService.create(nuevaPlantilla).subscribe({

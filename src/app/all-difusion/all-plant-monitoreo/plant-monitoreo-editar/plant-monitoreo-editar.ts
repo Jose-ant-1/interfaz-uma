@@ -5,6 +5,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PlantillaMonitoreoService } from '../../../services/plantilla-monitoreo.service';
 import { MonitoreoService } from '../../../services/monitoreo.service';
 import { firstValueFrom } from 'rxjs';
+import {MonitoreoListadoDTO} from '../../../models/monitoreo.model';
+import {PlantillaMonitoreo} from '../../../models/plantilla-monitoreo';
 
 @Component({
   selector: 'app-plantilla-monitoreo-editar',
@@ -21,7 +23,7 @@ export class PlantMonitoreoEditar implements OnInit {
 
   idPlantilla!: number;
   nombrePlantilla = '';
-  misMonitoreosDisponibles = signal<any[]>([]);
+  misMonitoreosDisponibles = signal<MonitoreoListadoDTO[]>([]);
   seleccionados = signal<number[]>([]);
   cargando = signal(true);
 
@@ -33,25 +35,21 @@ export class PlantMonitoreoEditar implements OnInit {
   async cargarDatos() {
     try {
       this.cargando.set(true);
-
-      // Cargamos monitoreos disponibles
       const monitoreos = await firstValueFrom(this.monitoreoService.getMisMonitoreos());
       this.misMonitoreosDisponibles.set(monitoreos);
 
-      // BUSCAMOS LA PLANTILLA
       const todas = await firstValueFrom(this.plantillaService.findAll());
       const plantilla = todas.find(p => p.id === this.idPlantilla);
 
       if (plantilla) {
         this.nombrePlantilla = plantilla.nombre;
-
-        // Mapeamos los monitoreos actuales
         if (plantilla.monitoreos) {
-          const idsActuales = Array.from(plantilla.monitoreos).map((m: any) => m.id);
+          // CAMBIO: m ya no es any, es parte del DTO
+          const idsActuales = plantilla.monitoreos
+            .filter(m => m.id !== undefined)
+            .map(m => m.id as number);
           this.seleccionados.set(idsActuales);
         }
-      } else {
-        this.router.navigate(['/dashboard/difusion/administrar-plantillas']);
       }
 
     } catch (error) {
@@ -77,14 +75,14 @@ export class PlantMonitoreoEditar implements OnInit {
     try {
       this.cargando.set(true);
 
-      const payload: any = {
+      const payload: PlantillaMonitoreo = {
         id: this.idPlantilla,
         nombre: this.nombrePlantilla,
         monitoreos: this.seleccionados().map(id => ({ id }))
       };
 
       await firstValueFrom(this.plantillaService.update(this.idPlantilla, payload));
-      this.router.navigate(['/dashboard/difusion/administrar-plantillas']);
+      await this.router.navigate(['/dashboard/difusion/administrar-plantillas']);
     } catch (error) {
       alert("Error al actualizar");
     } finally {
