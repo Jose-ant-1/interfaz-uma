@@ -96,7 +96,7 @@ export class PerfilComponent implements OnInit {
     this.usuarioService.updatePerfil(datosParaEnviar).subscribe({
       next: (userActualizado) => {
         // Actualizamos sesión y estado local
-        this.authService.actualizarCredencialesTrasCambioEmail(userActualizado.email, userActualizado.nombre);
+        this.authService.actualizarDatosTrasCambio(userActualizado.email, userActualizado.nombre);
         this.usuario.set(userActualizado);
         this.editando.set(false);
       },

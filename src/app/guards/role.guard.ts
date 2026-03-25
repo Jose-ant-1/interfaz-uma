@@ -6,12 +6,13 @@ export const roleGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Comprobamos si el rol es exactamente ADMIN
-  if (authService.userRole() === 'ADMIN') {
+  const role = authService.userRole() || localStorage.getItem('userRole');
+
+  if (role === 'ADMIN') {
     return true;
   }
 
-  // Si no es ADMIN, lo redirigimos al dashboard general
-  console.warn('Acceso denegado: Se requiere rol ADMIN');
-  return router.parseUrl('/dashboard/monitoreos');
+  // Si no es admin, usamos navigate que es más "agresivo" que parseUrl
+  router.navigate(['/dashboard/monitoreos']);
+  return false;
 };

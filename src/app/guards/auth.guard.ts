@@ -6,11 +6,11 @@ export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Si userRole() tiene valor (ADMIN o USER), le dejamos pasar
+  console.log('Guard revisando rol:', authService.userRole());
+
   if (authService.userRole()) {
     return true;
   }
-
-  // Si es null, al login de cabeza
+  console.warn('Guard: No autenticado, redirigiendo...');
   return router.parseUrl('/login');
 }

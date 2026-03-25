@@ -13,11 +13,26 @@
       </div>
     </div>
 
-    <button routerLink="/dashboard/difusion/nueva-plantilla"
-            class="w-full sm:w-auto px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition shadow-md flex justify-center items-center gap-2">
-      <i class="bi bi-plus-circle-fill"></i>
-      Nueva Plantilla
-    </button>
+    <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+      <button routerLink="/dashboard/difusion/nueva-plantilla"
+              class="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 transition shadow-md flex justify-center items-center gap-2">
+        <i class="bi bi-plus-circle-fill"></i>
+        Nueva Plantilla
+      </button>
+    </div>
+  </div>
+
+  <div class="relative px-1">
+    <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </span>
+    <input type="text"
+           [ngModel]="filtro()"
+           (ngModelChange)="filtro.set($event)"
+           placeholder="Buscar grupo por nombre..."
+           class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm text-slate-600 placeholder:text-slate-400 font-medium">
   </div>
 
   <div class="overflow-hidden">
@@ -32,11 +47,12 @@
         </thead>
 
         <tbody class="block md:table-row-group">
-          @for (p of plantillas(); track p.id) {
+          @for (p of plantillasFiltradas(); track p.id) {
             <tr class="flex flex-col md:table-row bg-white border border-slate-200 md:border-none shadow-sm md:shadow-none rounded-2xl md:rounded-none overflow-hidden hover:bg-slate-50 transition-colors mb-4 md:mb-0">
 
               <td class="px-6 py-4 md:py-5 md:border-y md:border-l border-slate-200 md:rounded-l-2xl">
                 <div class="flex items-center gap-3">
+
                   <div class="min-w-0">
                     <div class="font-bold text-slate-700 truncate text-base">{{ p.nombre }}</div>
                     <div class="text-[10px] text-slate-400 md:hidden uppercase font-bold mt-1">Nombre de plantilla</div>
@@ -48,7 +64,7 @@
                 <div class="flex md:justify-center">
                   <span class="inline-flex items-center px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200">
                     <i class="bi bi-globe2 mr-2"></i>
-                    {{ p.monitoreos.length }} <span class="ml-1 md:hidden">Páginas</span>
+                    {{ p.monitoreos.length || 0 }} <span class="ml-1 md:hidden">Páginas</span>
                   </span>
                 </div>
               </td>
@@ -57,6 +73,7 @@
                 <div class="flex items-center justify-end gap-2 border-t border-slate-50 pt-3 md:border-none md:pt-0 mt-3 md:mt-0">
                   <button [routerLink]="['/dashboard/difusion/editar-plantilla', p.id]"
                           class="flex-1 md:flex-none p-2.5 md:p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 md:border-none rounded-lg transition flex justify-center items-center">
+                    <i class="bi bi-pencil-square text-lg md:text-base"></i>
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -72,19 +89,29 @@
                 </div>
               </td>
             </tr>
+          } @empty {
+            <tr class="block md:table-row">
+              <td colspan="3" class="p-0">
+                <div class="bg-white rounded-2xl border border-dashed border-slate-300 py-12 px-6 text-center">
+                  <div class="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                    @if (filtro()) {
+                      <i class="bi bi-search text-3xl"></i>
+                    } @else {
+                      <i class="bi bi-collection text-3xl"></i>
+                    }
+                  </div>
+                  <h3 class="text-slate-900 font-bold">
+                    {{ filtro() ? 'Sin resultados' : 'No hay plantillas' }}
+                  </h3>
+                  <p class="text-slate-500 text-sm max-w-xs mx-auto mt-1">
+                    {{ filtro() ? 'No encontramos nada que coincida con "' + filtro() + '"' : 'Crea una plantilla para agrupar tus monitoreos.' }}
+                  </p>
+                </div>
+              </td>
+            </tr>
           }
         </tbody>
       </table>
     </div>
-
-    @if (!cargando() && plantillas().length === 0) {
-      <div class="bg-white rounded-2xl border border-dashed border-slate-300 py-12 px-6 text-center">
-        <div class="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
-          <i class="bi bi-file-earmark-plus text-3xl"></i>
-        </div>
-        <h3 class="text-slate-900 font-bold">No hay plantillas</h3>
-        <p class="text-slate-500 text-sm max-w-xs mx-auto mt-1">Crea una plantilla para agrupar tus monitoreos.</p>
-      </div>
-    }
   </div>
 </div>

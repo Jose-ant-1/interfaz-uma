@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Pagina } from '../models/pagina.model';
 
@@ -8,44 +8,33 @@ import { Pagina } from '../models/pagina.model';
 })
 export class PaginaService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/paginas';
 
-  buscarPaginas(termino: string): Observable<Pagina[]> {
-    // Si el término está vacío, llamamos a la lista completa
-    if (!termino.trim()) {
-      return this.getPaginas();
-    }
-
-    // Enviamos el término como query parameter '?q=...'
-    return this.http.get<Pagina[]>(`${this.apiUrl}/buscar?q=${termino}`, {
-      headers: this.getHeaders()
-    });
-  }
-
-  private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('authData');
-    return new HttpHeaders({
-      'Authorization': token?.startsWith('Basic ') ? token : `Basic ${token}`
-    });
-  }
+  private resource = '/paginas';
 
   getPaginas(): Observable<Pagina[]> {
-    return this.http.get<Pagina[]>(this.apiUrl, { headers: this.getHeaders() });
+    return this.http.get<Pagina[]>(this.resource);
   }
 
   getPaginaById(id: number): Observable<Pagina> {
-    return this.http.get<Pagina>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
+    return this.http.get<Pagina>(`${this.resource}/${id}`);
   }
 
-  createPagina(pagina: Pagina): Observable<Pagina> {
-    return this.http.post<Pagina>(this.apiUrl, pagina, { headers: this.getHeaders() });
+  buscarPaginas(termino: string): Observable<Pagina[]> {
+    if (!termino.trim()) {
+      return this.getPaginas();
+    }
+    return this.http.get<Pagina[]>(`${this.resource}/buscar?q=${termino}`);
   }
 
-  updatePagina(id: number, data: any): Observable<Pagina> {
-    return this.http.put<Pagina>(`${this.apiUrl}/${id}`, data, { headers: this.getHeaders() });
+  createPagina(pagina: Partial<Pagina>): Observable<Pagina> {
+    return this.http.post<Pagina>(this.resource, pagina);
+  }
+
+  updatePagina(id: number, data: Partial<Pagina>): Observable<Pagina> {
+    return this.http.put<Pagina>(`${this.resource}/${id}`, data);
   }
 
   deletePagina(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
+    return this.http.delete<void>(`${this.resource}/${id}`);
   }
 }

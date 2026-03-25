@@ -1,31 +1,44 @@
 <div class="max-w-2xl mx-auto space-y-6">
   <div class="flex items-center gap-4 mb-2">
-    <button routerLink="/dashboard/difusion-masiva" class="p-2 text-slate-400 hover:text-slate-600 bg-white rounded-lg border border-slate-200 shadow-sm transition">
+    <button routerLink="/dashboard/difusion/administrar-plantillas" class="p-2 text-slate-400 hover:text-slate-600 bg-white rounded-lg border border-slate-200 shadow-sm transition">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
     </button>
     <div>
       <h2 class="text-2xl font-bold text-slate-800">Crear Pack de Monitoreos</h2>
-      <p class="text-sm text-slate-500 font-medium italic">Agrupa tus monitoreos bajo un nombre para difundirlos fácilmente</p>
+      <p class="text-sm text-slate-500 font-medium italic">Agrupa tus monitoreos para difundirlos fácilmente</p>
     </div>
   </div>
 
   <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
     <div class="space-y-6">
       <div>
-        <label class="block text-sm font-bold text-slate-700 mb-2">Nombre del Pack</label>
-        <input type="text"
-               [(ngModel)]="nombrePlantilla"
+        <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Nombre del Pack</label>
+        <input type="text" [(ngModel)]="nombrePlantilla"
                placeholder="Ej: Pack Soporte Mañana"
-               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-slate-50">
+               class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium">
+      </div>
+
+      <div class="relative">
+        <label class="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Buscar Monitoreos</label>
+        <div class="relative">
+          <input type="text" (input)="onSearch($event)"
+                 placeholder="Filtrar por nombre o ID..."
+                 class="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 text-sm">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
       </div>
 
       <div>
-        <label class="block text-sm font-bold text-slate-700 mb-3">Selecciona los Monitoreos a incluir</label>
+        <label class="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide">Selecciona los monitoreos</label>
         <div class="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-          @for (m of misMonitoreos(); track m.id) {
-            <label class="flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:bg-blue-50 hover:border-blue-200 cursor-pointer transition-all group">
+          @for (m of monitoreosFiltrados(); track m.id) {
+            <label class="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/30 hover:bg-blue-50 hover:border-blue-200 cursor-pointer transition-all group">
               <div class="flex items-center gap-3">
                 <input type="checkbox"
                        [checked]="estaSeleccionado(m.id)"
@@ -36,7 +49,9 @@
               <span class="text-[10px] font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded">ID: {{ m.id }}</span>
             </label>
           } @empty {
-            <p class="text-sm text-slate-400 italic p-4 text-center">No tienes monitoreos creados para agrupar.</p>
+            <div class="text-center py-6 border border-dashed border-slate-200 rounded-xl">
+              <p class="text-sm text-slate-400 italic">No se encontraron monitoreos.</p>
+            </div>
           }
         </div>
       </div>
@@ -47,10 +62,8 @@
                 class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-md disabled:opacity-50 flex items-center justify-center gap-2">
           @if (cargando()) {
             <div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-          } @else {
-            <i class="bi bi-save2"></i>
-            Guardar Plantilla
           }
+          Crear Pack
         </button>
       </div>
     </div>

@@ -1,44 +1,45 @@
 import { inject, Injectable, signal } from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
-import { catchError, tap } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { catchError, tap, switchMap } from 'rxjs';
+import { Usuario } from '../models/usuario.model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/usuarios';
+  private resource = '/usuarios';
 
-  // Señales reactivas para el estado de la aplicación
   userRole = signal<string | null>(localStorage.getItem('userRole'));
   userName = signal<string | null>(localStorage.getItem('userName'));
   userId = signal<string | null>(localStorage.getItem('userId'));
 
+  isAuthenticated(): boolean {
+    return localStorage.getItem('authData') !== null && this.userRole() !== null;
+  }
+
   login(email: string, pass: string) {
-    const cleanEmail = email.trim();
-
-    const credentials = `${cleanEmail}:${pass}`;
-    const encoded = btoa(Array.from(new TextEncoder().encode(credentials))
-      .map(b => String.fromCharCode(b)).join(''));
-
-    const authHeader = `Basic ${encoded}`;
-
-    // IMPORTANTE: Para la primera petición (/me), debemos pasar el header manualmente
-    const headers = new HttpHeaders({ 'Authorization': authHeader });
-
-    return this.http.get(`${this.apiUrl}/me`, { headers }).pipe(
-      tap((user: any) => {
-        // Si llegamos aquí, las credenciales son válidas
-        localStorage.clear();
-        localStorage.setItem('authData', authHeader);
+    // Enviamos credenciales al endpoint de login
+    return this.http.post<{token: string}>(`${this.resource}/login`, {
+      email: email.trim(),
+      password: pass
+    }).pipe(
+      tap(res => {
+        // Guardamos el Token con el formato "Bearer"
+        localStorage.setItem('authData', `Bearer ${res.token}`);
+      }),
+      // Una vez tenemos el token, pedimos los datos del usuario logueado
+      switchMap(() => this.http.get<Usuario>(`${this.resource}/me`)),
+      tap((user) => {
+        // Guardamos los datos del perfil
         localStorage.setItem('userRole', user.permiso || 'USER');
         localStorage.setItem('userName', user.nombre || '');
         localStorage.setItem('userId', user.id?.toString() || '');
 
-        this.userRole.set(user.permiso);
+        this.userRole.set(user.permiso || 'USER');
         this.userName.set(user.nombre);
         this.userId.set(user.id?.toString() || null);
       }),
       catchError(err => {
-        localStorage.removeItem('authData');
+        this.logout();
         console.error('Error en login:', err);
         throw err;
       })
@@ -46,33 +47,18 @@ export class AuthService {
   }
 
   logout() {
-    // Limpieza total del rastro de sesión
     localStorage.removeItem('authData');
     localStorage.removeItem('userRole');
     localStorage.removeItem('userName');
     localStorage.removeItem('userId');
 
-    // Reset de señales
     this.userRole.set(null);
     this.userName.set(null);
     this.userId.set(null);
   }
 
-  actualizarCredencialesTrasCambioEmail(nuevoEmail: string, nuevoNombre: string) {
-    const authData = localStorage.getItem('authData');
-    if (!authData) return;
-
-    // Decodificar de forma segura
-    const base64 = authData.replace('Basic ', '');
-    const decoded = new TextDecoder().decode(Uint8Array.from(atob(base64), c => c.charCodeAt(0)));
-    const password = decoded.split(':')[1];
-
-    // Re-encodear
-    const nuevasCreds = `${nuevoEmail.trim()}:${password}`;
-    const nuevoAuth = 'Basic ' + btoa(Array.from(new TextEncoder().encode(nuevasCreds)).map(b => String.fromCharCode(b)).join(''));
-
-    localStorage.setItem('authData', nuevoAuth);
+  actualizarDatosTrasCambio(nuevoEmail: string, nuevoNombre: string) {
     this.userName.set(nuevoNombre);
+    localStorage.setItem('userName', nuevoNombre);
   }
-
 }

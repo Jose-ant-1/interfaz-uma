@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { MonitoreoService } from '../../services/monitoreo.service';
+import { PaginaService } from '../../services/pagina.service';
 import { firstValueFrom } from 'rxjs';
-import {Pagina} from '../../models/pagina.model';
+import { Pagina } from '../../models/pagina.model';
 
 @Component({
   selector: 'app-monitoreo-anyadir',
@@ -14,9 +15,9 @@ import {Pagina} from '../../models/pagina.model';
 })
 export class MonitoreoAnyadir implements OnInit {
   private monitoreoService = inject(MonitoreoService);
+  private paginaService = inject(PaginaService);
   private router = inject(Router);
 
-  // Formulario
   nombre = '';
   urlSeleccionada = '';
   minutos = 5;
@@ -27,16 +28,14 @@ export class MonitoreoAnyadir implements OnInit {
 
   async ngOnInit() {
     try {
-      // Cargamos todas las páginas disponibles para el select
-      const paginas = await firstValueFrom(this.monitoreoService.obtenerTodasLasPaginas());
+      const paginas = await firstValueFrom(this.paginaService.getPaginas());
       this.paginasExistentes.set(paginas);
     } catch (e) {
-      console.error("Error al cargar las páginas existentes", e);
+      console.error("Error al cargar las páginas desde PaginaService", e);
     }
   }
 
   async guardar() {
-
     const nombreLimpio = this.nombre.trim();
 
     if (!nombreLimpio || !this.urlSeleccionada) {
@@ -44,35 +43,22 @@ export class MonitoreoAnyadir implements OnInit {
       return;
     }
 
-    // VALIDACIÓN DE NÚMEROS
-    if (this.minutos < 1) {
-      alert("La frecuencia mínima es de 1 minuto.");
-      return;
-    }
-    if (this.repeticiones < 0) {
-      alert("Los reintentos no pueden ser negativos.");
-      return;
-    }
-
-    if (!this.nombre || !this.urlSeleccionada) {
-      alert("Por favor, rellena todos los campos");
+    if (this.minutos < 1 || this.repeticiones < 0) {
+      alert("Valores de tiempo o reintentos no válidos.");
       return;
     }
 
     try {
       this.cargando.set(true);
 
-      // El payload exacto que espera MonitoreoController.java
       const payload = {
-        nombre: this.nombre,
-        paginaUrl: this.urlSeleccionada, // La URL de la página seleccionada
+        nombre: nombreLimpio,
+        paginaUrl: this.urlSeleccionada,
         minutos: this.minutos,
         repeticiones: this.repeticiones
       };
 
       await firstValueFrom(this.monitoreoService.crearMonitoreo(payload));
-
-      // Si todo sale bien, volvemos a la lista
       this.router.navigate(['/dashboard/monitoreos']);
     } catch (error) {
       console.error("Error al crear el monitoreo:", error);

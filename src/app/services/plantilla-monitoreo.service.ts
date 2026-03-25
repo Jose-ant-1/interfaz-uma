@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PlantillaMonitoreo } from '../models/plantilla-monitoreo';
 
@@ -8,35 +8,25 @@ import { PlantillaMonitoreo } from '../models/plantilla-monitoreo';
 })
 export class PlantillaMonitoreoService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/plantillaMonitoreo';
-
-  private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('authData');
-    return new HttpHeaders({
-      'Authorization': token?.startsWith('Basic ') ? token : `Basic ${token}`
-    });
-  }
+  private resource = '/plantillaMonitoreo';
 
   findAll(): Observable<PlantillaMonitoreo[]> {
-    return this.http.get<PlantillaMonitoreo[]>(this.apiUrl, {headers: this.getHeaders()});
+    return this.http.get<PlantillaMonitoreo[]>(this.resource);
   }
 
   findByPropietario(usuarioId: number): Observable<PlantillaMonitoreo[]> {
-    return this.http.get<PlantillaMonitoreo[]>(`${this.apiUrl}/propietario/${usuarioId}`, {headers: this.getHeaders()});
+    return this.http.get<PlantillaMonitoreo[]>(`${this.resource}/propietario/${usuarioId}`);
   }
 
-  create(plantilla: PlantillaMonitoreo): Observable<PlantillaMonitoreo> {
-    return this.http.post<PlantillaMonitoreo>(this.apiUrl, plantilla, {headers: this.getHeaders()});
+  create(plantilla: Partial<PlantillaMonitoreo>): Observable<PlantillaMonitoreo> {
+    return this.http.post<PlantillaMonitoreo>(this.resource, plantilla);
   }
 
-  update(id: number, plantilla: PlantillaMonitoreo): Observable<PlantillaMonitoreo> {
-    return this.http.put<PlantillaMonitoreo>(`${this.apiUrl}/${id}`, plantilla, {headers: this.getHeaders()});
+  update(id: number, plantilla: Partial<PlantillaMonitoreo>): Observable<PlantillaMonitoreo> {
+    return this.http.put<PlantillaMonitoreo>(`${this.resource}/${id}`, plantilla);
   }
-
 
   delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`, {headers: this.getHeaders()});
+    return this.http.delete<void>(`${this.resource}/${id}`);
   }
-
-
 }

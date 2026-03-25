@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import {Component, computed, inject, OnInit, signal} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -39,28 +39,33 @@ export class PlantUsuarioEditar implements OnInit {
     try {
       this.cargando.set(true);
 
-      // Obtenemos perfil, todos los usuarios y el grupo actual en paralelo
       const [miPerfil, todosLosUsuarios, grupo] = await Promise.all([
         firstValueFrom(this.usuarioService.getPerfil()),
         firstValueFrom(this.usuarioService.getUsuarios()),
         firstValueFrom(this.plantillaUsuarioService.findById(this.idGrupo))
       ]);
 
-      // Filtramos la lista para que NO aparezcas tú (basado en el ID de tu perfil)
-      const usuariosSinMi = todosLosUsuarios.filter(u =>
-        u.id !== undefined && u.id !== miPerfil.id
-      );
-      this.usuariosDisponibles.set(usuariosSinMi);
-
-      // Cargamos los datos del grupo
       if (grupo) {
         this.nombreGrupo = grupo.nombre;
-        if (grupo.usuarios) {
-          const idsActuales = grupo.usuarios
-            .filter(u => u.id !== undefined)
-            .map(u => u.id as number);
-          this.seleccionados.set(idsActuales);
-        }
+
+        // Extraemos los IDs que ya están en el grupo
+        const idsActuales = (grupo.usuarios || [])
+          .filter(u => u.id !== undefined)
+          .map(u => u.id as number);
+        this.seleccionados.set(idsActuales);
+
+        // Filtramos para no incluirte a ti mismo
+        const usuariosSinMi = todosLosUsuarios.filter(u =>
+          u.id !== undefined && u.id !== miPerfil.id
+        );
+
+        // Seleccionados primero, manteniendo el orden A-Z de la API
+        const marcados = usuariosSinMi.filter(u => idsActuales.includes(u.id!));
+        const noMarcados = usuariosSinMi.filter(u => !idsActuales.includes(u.id!));
+
+        // Unimos ambas listas, primero los que están dentro, luego los que no
+        this.usuariosDisponibles.set([...marcados, ...noMarcados]);
+
       } else {
         this.router.navigate(['/dashboard/difusion/administrar-grupos']);
       }
@@ -102,4 +107,25 @@ export class PlantUsuarioEditar implements OnInit {
       this.cargando.set(false);
     }
   }
+
+  filtro = signal('');
+
+  usuariosFiltrados = computed(() => {
+    const busqueda = this.filtro().toLowerCase().trim();
+    const lista = this.usuariosDisponibles();
+
+    if (!busqueda) return lista;
+
+    return lista.filter(u =>
+      u.nombre.toLowerCase().includes(busqueda) ||
+      u.email.toLowerCase().includes(busqueda)
+    );
+  });
+
+  onSearch(event: Event) {
+    const value = (event.target as HTMLInputElement).value;
+    this.filtro.set(value);
+  }
+
+
 }

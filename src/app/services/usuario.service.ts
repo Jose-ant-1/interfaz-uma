@@ -1,54 +1,45 @@
-import {inject, Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {Observable} from 'rxjs';
-import {Usuario} from '../models/usuario.model';
+import { inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import {Usuario, UsuarioDTO} from '../models/usuario.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UsuarioService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/usuarios';
 
-  private getHeaders(): HttpHeaders {
-    const token = localStorage.getItem('authData');
-    return new HttpHeaders({
-      'Authorization': token?.startsWith('Basic ') ? token : `Basic ${token}`
-    });
-  }
+  private resource = '/usuarios';
 
-  buscarUsuarios(termino: string): Observable<any[]> {
-    const url = `${this.apiUrl}/buscar?q=${termino}`;
-    return this.http.get<any[]>(url, {headers: this.getHeaders()});
+  buscarUsuarios(termino: string): Observable<UsuarioDTO[]> {
+    return this.http.get<UsuarioDTO[]>(`${this.resource}/buscar?q=${termino}`);
   }
 
   getPerfil(): Observable<Usuario> {
-    return this.http.get<Usuario>(`${this.apiUrl}/me`, {headers: this.getHeaders()});
+    return this.http.get<Usuario>(`${this.resource}/me`);
   }
 
   updatePerfil(usuario: Partial<Usuario>): Observable<Usuario> {
-    return this.http.put<Usuario>(`${this.apiUrl}/me`, usuario, {headers: this.getHeaders()});
+    return this.http.put<Usuario>(`${this.resource}/me`, usuario);
   }
 
   getUsuarios(): Observable<Usuario[]> {
-    return this.http.get<Usuario[]>(this.apiUrl, {headers: this.getHeaders()});
+    return this.http.get<Usuario[]>(this.resource);
   }
 
   getUsuarioById(id: number): Observable<Usuario> {
-    return this.http.get<Usuario>(`${this.apiUrl}/${id}`, {headers: this.getHeaders()});
+    return this.http.get<Usuario>(`${this.resource}/${id}`);
   }
 
   crearUsuario(usuario: Partial<Usuario>): Observable<Usuario> {
-    return this.http.post<Usuario>(this.apiUrl, usuario, {headers: this.getHeaders()});
+    return this.http.post<Usuario>(this.resource, usuario);
   }
 
   updateUsuario(id: number, usuario: Partial<Usuario>): Observable<Usuario> {
-    return this.http.put<Usuario>(`${this.apiUrl}/${id}`, usuario, {headers: this.getHeaders()});
+    return this.http.put<Usuario>(`${this.resource}/${id}`, usuario);
   }
 
   eliminarUsuario(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`, {headers: this.getHeaders()});
+    return this.http.delete<void>(`${this.resource}/${id}`);
   }
-
-
 }
