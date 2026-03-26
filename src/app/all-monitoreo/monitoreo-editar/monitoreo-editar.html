@@ -21,6 +21,42 @@
       </div>
     } @else {
       <div class="space-y-6">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            Página Web a Monitorear
+          </label>
+          <div class="relative">
+            <select [(ngModel)]="monitoreo.paginaUrl"
+                    name="paginaUrl"
+                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition bg-white appearance-none cursor-pointer text-slate-700 font-medium">
+
+              <option value="" disabled>-- Selecciona una página registrada --</option>
+
+              @for (p of paginasDisponibles(); track p.id) {
+                <option [value]="p.url">
+                  {{ p.nombre }} - {{ p.url }}
+                </option>
+              }
+            </select>
+
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-400 mt-1 ml-1 italic">
+            * Solo puedes monitorear páginas que hayan sido dadas de alta previamente.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nombre Identificador</label>
+          <input [(ngModel)]="monitoreo.nombre" type="text"
+                 class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition">
+        </div>
+
         <div>
           <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nombre Identificador</label>
           <input [(ngModel)]="monitoreo.nombre" type="text"
@@ -88,11 +124,6 @@
         Volver al listado
       </button>
 
-      <div class="flex items-center gap-2 text-slate-300 text-[10px] uppercase font-bold tracking-tighter">
-        <span>UMA Security Cloud</span>
-        <span class="w-1 h-1 bg-slate-200 rounded-full"></span>
-        <span>Configuración v2.0</span>
-      </div>
     </div>
   </div>
 </div>

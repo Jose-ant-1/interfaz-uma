@@ -47,6 +47,6 @@ export class MonitoreoService {
 
   quitarEnMasa(ids: number[], emails: string[]): Observable<void> {
     const params = new HttpParams().set('emails', emails.join(','));
-    return this.http.put<void>(`${this.resource}/quitar`, ids, { params });
+    return this.http.delete<void>(`${this.resource}/invitar`, { params, body: ids });
   }
 }

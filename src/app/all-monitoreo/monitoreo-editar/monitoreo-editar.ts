@@ -7,6 +7,8 @@ import {UsuarioService} from '../../services/usuario.service';
 import {Usuario, UsuarioDTO} from '../../models/usuario.model';
 import {MonitoreoDTODetalle} from '../../models/monitoreo.model';
 import {MonitoreoService} from '../../services/monitoreo.service';
+import {Pagina} from '../../models/pagina.model';
+import {PaginaService} from '../../services/pagina.service';
 
 @Component({
   selector: 'app-monitoreo-editar',
@@ -19,7 +21,9 @@ export class MonitoreoEditar implements OnInit {
   private monitoreoService = inject(MonitoreoService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private paginaService = inject(PaginaService);
 
+  paginasDisponibles = signal<Pagina[]>([]);
   usuarioLogueadoId = signal<number | null>(null);
   usuariosSistema = signal<Usuario[]>([]);
   cargando = signal(true);
@@ -34,26 +38,27 @@ export class MonitoreoEditar implements OnInit {
 
   invitadosOriginales: string[] = [];
 
-  ngOnInit() {
+  async ngOnInit() {
     const id = this.route.snapshot.params['id'];
 
-    this.usuarioService.getPerfil().subscribe({
-      next: (yo) => {
-        this.usuarioLogueadoId.set(yo.id!);
-        this.cargarUsuariosSistema();
-      }
-    });
+    try {
+      this.cargando.set(true);
 
-    if (id) {
-      this.monitoreoService.getMonitoreoPorId(Number(id)).subscribe({
-        next: (data) => {
-          this.monitoreo = data;
-          // Guardamos los emails con los que empieza el monitoreo
-          this.invitadosOriginales = data.invitados?.map(i => i.email) || [];
-          this.cargando.set(false);
-        },
-        error: () => this.router.navigate(['/dashboard/monitoreos'])
-      });
+      // Cargamos el monitoreo y las páginas disponibles en paralelo
+      const [datosMonitoreo, listaPaginas] = await Promise.all([
+        firstValueFrom(this.monitoreoService.getMonitoreoPorId(id)),
+        firstValueFrom(this.paginaService.getPaginas()) // <--- Usando tu método
+      ]);
+
+      this.monitoreo = datosMonitoreo;
+      this.paginasDisponibles.set(listaPaginas);
+
+      this.invitadosOriginales = datosMonitoreo.invitados?.map(i => i.email) || [];
+
+    } catch (error) {
+      console.error("Error al cargar datos:", error);
+    } finally {
+      this.cargando.set(false);
     }
   }
 
@@ -105,7 +110,7 @@ export class MonitoreoEditar implements OnInit {
       // Guardar la configuración básica
       const payload = {
         nombre: nombreLimpio,
-        url: this.monitoreo.paginaUrl,
+        paginaUrl: this.monitoreo.paginaUrl,
         minutos: Number(this.monitoreo.minutos),
         repeticiones: Number(this.monitoreo.repeticiones)
       };
