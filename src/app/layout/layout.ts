@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import {Component, inject, computed, signal, HostListener} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../services/auth';
@@ -10,8 +10,15 @@ import { AuthService } from '../services/auth';
   templateUrl: './layout.html'
 })
 export class Layout {
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
+  @HostListener('window:keydown.escape')
+  onEscape() {
+    if (this.menuAbierto()) {
+      this.cerrarMenu();
+    }
+  }
 
   userName = this.authService.userName;
   userRole = this.authService.userRole;

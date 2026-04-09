@@ -12,9 +12,9 @@ import { Usuario } from '../../models/usuario.model';
   templateUrl: './usuario-editar.html'
 })
 export class UsuarioEditar implements OnInit {
-  private usuarioService = inject(UsuarioService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
+  private readonly usuarioService = inject(UsuarioService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   // Usamos null como estado inicial para que el @if del HTML funcione correctamente
   usuario = signal<Usuario | null>(null);
@@ -36,7 +36,7 @@ export class UsuarioEditar implements OnInit {
 
   guardar(): void {
     const currentUsuario = this.usuario();
-    if (!currentUsuario || !currentUsuario.id) return;
+    if (!currentUsuario?.id) return;
 
     this.cargando.set(true); // Reutilizamos el estado de carga para el feedback del botón
 

@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UsuarioService } from '../../services/usuario.service';
 import { Usuario } from '../../models/usuario.model';
-import {RouterLink} from '@angular/router';
 import {debounceTime, distinctUntilChanged, Subject, switchMap} from 'rxjs';
 import {UsuarioCardComponent} from '../usuario-card/usuario-card';
 
@@ -13,8 +12,8 @@ import {UsuarioCardComponent} from '../usuario-card/usuario-card';
   templateUrl: './usuario-lista.html'
 })
 export class UsuariosListComponent implements OnInit {
-  private usuarioService = inject(UsuarioService);
-  private buscador$ = new Subject<string>();
+  private readonly usuarioService = inject(UsuarioService);
+  private readonly buscador$ = new Subject<string>();
 
   usuarios = signal<Usuario[]>([]);
   cargando = signal(true);

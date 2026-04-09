@@ -2,10 +2,12 @@
 
 
   @if (menuAbierto()) {
-    <div
-      class="fixed inset-0 bg-black/50 z-40 md:hidden"
+    <button
+      type="button"
+      class="fixed inset-0 bg-black/50 z-40 md:hidden border-none cursor-default w-full h-full"
+      aria-label="Cerrar menú"
       (click)="cerrarMenu()">
-    </div>
+    </button>
   }
 
 

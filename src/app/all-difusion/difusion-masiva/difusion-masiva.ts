@@ -18,8 +18,7 @@ import {UsuarioDTO} from '../../models/usuario.model';
   selector: 'app-difusion-masiva',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
-  templateUrl: './difusion-masiva.html',
-  styleUrls: ['./difusion-masiva.css']
+  templateUrl: './difusion-masiva.html'
 })
 export class DifusionMasiva implements OnInit {
 

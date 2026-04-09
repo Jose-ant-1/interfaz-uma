@@ -31,13 +31,13 @@
                 <h3 class="text-xs font-bold text-blue-600 uppercase tracking-widest">Editar Información Personal</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Nombre Completo</label>
-                    <input type="text" [(ngModel)]="datosEdit().nombre"
+                    <label for="nombre" class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Nombre Completo</label>
+                    <input id="nombre" type="text" [(ngModel)]="datosEdit().nombre"
                            class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
                   </div>
                   <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Correo Electrónico</label>
-                    <input type="email" [(ngModel)]="datosEdit().email"
+                    <label for="email" class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Correo Electrónico</label>
+                    <input id="email" type="email" [(ngModel)]="datosEdit().email"
                            class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none bg-white">
                   </div>
                 </div>
@@ -52,8 +52,8 @@
               <div class="bg-slate-50 p-6 rounded-2xl border border-amber-100 space-y-4 animate-in fade-in duration-300">
                 <h3 class="text-xs font-bold text-amber-600 uppercase tracking-widest">Establecer Nueva Contraseña</h3>
                 <div>
-                  <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Nueva Clave</label>
-                  <input type="password" [ngModel]="nuevaPassword()" (ngModelChange)="nuevaPassword.set($event)"
+                  <label for="nuevaClave" class="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Nueva Clave</label>
+                  <input id="nuevaClave" type="password" [ngModel]="nuevaPassword()" (ngModelChange)="nuevaPassword.set($event)"
                          placeholder="Introduce la nueva contraseña..."
                          class="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-amber-500 outline-none bg-white">
                 </div>

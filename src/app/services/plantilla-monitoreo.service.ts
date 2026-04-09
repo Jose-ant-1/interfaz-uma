@@ -7,8 +7,8 @@ import { PlantillaMonitoreo } from '../models/plantilla-monitoreo';
   providedIn: 'root',
 })
 export class PlantillaMonitoreoService {
-  private http = inject(HttpClient);
-  private resource = '/plantillaMonitoreo';
+  private readonly http = inject(HttpClient);
+  private readonly resource = '/plantillaMonitoreo';
 
   findAll(): Observable<PlantillaMonitoreo[]> {
     return this.http.get<PlantillaMonitoreo[]>(this.resource);

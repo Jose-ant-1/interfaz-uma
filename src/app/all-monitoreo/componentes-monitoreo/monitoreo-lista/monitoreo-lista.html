@@ -32,7 +32,8 @@
       @for (item of misMonitoreosFiltrados(); track item.id) {
         <app-monitoreo-card
           [monitoreo]="item"
-          [isAdmin]="userRole() === 'ADMIN'">
+          [isAdmin]="userRole() === 'ADMIN'"
+          (eliminado)="cargarTodo()">
         </app-monitoreo-card>
       } @empty {
         <div class="py-8 md:py-10 bg-white rounded-2xl border-2 border-dashed border-slate-200 text-center">

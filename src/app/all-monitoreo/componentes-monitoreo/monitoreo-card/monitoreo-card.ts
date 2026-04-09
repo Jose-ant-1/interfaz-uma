@@ -1,5 +1,5 @@
 import { Component, inject, Input, computed, Output, EventEmitter } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth';
 import { MonitoreoService } from '../../../services/monitoreo.service';
 import { firstValueFrom } from 'rxjs';
@@ -16,8 +16,8 @@ export class MonitoreoCard {
 
   @Output() eliminado = new EventEmitter<void>(); // Para que la lista se refresque
 
-  private authService = inject(AuthService);
-  private monitoreoService = inject(MonitoreoService);
+  private readonly authService = inject(AuthService);
+  private readonly monitoreoService = inject(MonitoreoService);
 
   esPropietario = computed(() => {
     const logueadoId = this.authService.userId();

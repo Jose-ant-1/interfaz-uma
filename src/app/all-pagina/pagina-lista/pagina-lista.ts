@@ -2,7 +2,7 @@ import {Component, OnInit, inject, signal} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {PaginaService} from '../../services/pagina.service';
 import {Pagina} from '../../models/pagina.model';
-import {Subject, debounceTime, distinctUntilChanged, switchMap} from 'rxjs';
+import {Subject, distinctUntilChanged, switchMap} from 'rxjs';
 import {PaginaCardComponent} from '../pagina-card/pagina-card';
 
 @Component({
@@ -12,19 +12,19 @@ import {PaginaCardComponent} from '../pagina-card/pagina-card';
   templateUrl: './pagina-lista.html'
 })
 export class PaginaListComponent implements OnInit {
-  private paginaService = inject(PaginaService);
-  private buscador$ = new Subject<string>(); // Flujo de términos de búsqueda
+  private readonly paginaService = inject(PaginaService);
+  private readonly buscador = new Subject<string>(); // Flujo de términos de búsqueda
   // Signal para manejar los datos reactivamente
   paginas = signal<Pagina[]>([]);
 
   onSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.buscador$.next(input.value);
+    this.buscador.next(input.value);
   }
 
   ngOnInit(): void {
   // Configuramos el buscador reactivo
-    this.buscador$.pipe(
+    this.buscador.pipe(
       distinctUntilChanged(), // Solo busca si el término cambió
       switchMap(term => term.length > 0
         ? this.paginaService.buscarPaginas(term)

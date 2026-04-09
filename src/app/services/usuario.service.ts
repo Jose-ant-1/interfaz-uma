@@ -7,9 +7,9 @@ import {Usuario, UsuarioDTO} from '../models/usuario.model';
   providedIn: 'root'
 })
 export class UsuarioService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  private resource = '/usuarios';
+  private readonly resource = '/usuarios';
 
   buscarUsuarios(termino: string): Observable<UsuarioDTO[]> {
     return this.http.get<UsuarioDTO[]>(`${this.resource}/buscar?q=${termino}`);

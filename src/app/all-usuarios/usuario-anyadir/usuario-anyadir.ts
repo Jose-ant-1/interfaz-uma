@@ -12,8 +12,8 @@ import { Usuario } from '../../models/usuario.model';
   templateUrl: './usuario-anyadir.html'
 })
 export class UsuarioAnyadir {
-  private usuarioService = inject(UsuarioService);
-  private router = inject(Router);
+  private readonly usuarioService = inject(UsuarioService);
+  private readonly router = inject(Router);
 
   // Inicializamos con valores por defecto
   nuevoUsuario = signal<Partial<Usuario>>({

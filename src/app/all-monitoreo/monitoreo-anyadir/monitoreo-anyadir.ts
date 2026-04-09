@@ -14,9 +14,9 @@ import { Pagina } from '../../models/pagina.model';
   templateUrl: './monitoreo-anyadir.html'
 })
 export class MonitoreoAnyadir implements OnInit {
-  private monitoreoService = inject(MonitoreoService);
-  private paginaService = inject(PaginaService);
-  private router = inject(Router);
+  private readonly monitoreoService = inject(MonitoreoService);
+  private readonly paginaService = inject(PaginaService);
+  private readonly router = inject(Router);
 
   nombre = '';
   urlSeleccionada = '';
@@ -26,7 +26,12 @@ export class MonitoreoAnyadir implements OnInit {
   paginasExistentes = signal<Pagina[]>([]);
   cargando = signal(false);
 
-  async ngOnInit() {
+  ngOnInit() {
+    this.inicializarComponente();
+  }
+
+  // 3. Lógica asíncrona en método privado
+  private async inicializarComponente() {
     try {
       const paginas = await firstValueFrom(this.paginaService.getPaginas());
       this.paginasExistentes.set(paginas);

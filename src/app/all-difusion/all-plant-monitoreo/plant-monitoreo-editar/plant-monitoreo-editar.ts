@@ -38,9 +38,16 @@ export class PlantMonitoreoEditar implements OnInit {
     );
   });
 
-  async ngOnInit() {
-    this.idPlantilla = Number(this.route.snapshot.paramMap.get('id'));
-    await this.cargarDatos();
+  ngOnInit() {
+    this.inicializarComponente();
+  }
+
+  private async inicializarComponente() {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.idPlantilla = Number(id);
+      await this.cargarDatos();
+    }
   }
 
   async cargarDatos() {

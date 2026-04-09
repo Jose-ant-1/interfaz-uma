@@ -14,9 +14,9 @@ import { MonitoreoListadoDTO } from '../../../models/monitoreo.model';
   templateUrl: './plant-monitoreo-anyadir.html'
 })
 export class PlantMonitoreoAnyadir implements OnInit {
-  private plantillaService = inject(PlantillaMonitoreoService);
-  private monitoreoService = inject(MonitoreoService);
-  private router = inject(Router);
+  private readonly plantillaService = inject(PlantillaMonitoreoService);
+  private readonly monitoreoService = inject(MonitoreoService);
+  private readonly router = inject(Router);
 
   nombrePlantilla = '';
   misMonitoreos = signal<MonitoreoListadoDTO[]>([]);

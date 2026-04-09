@@ -12,7 +12,7 @@ import {MonitoreoListadoDTO} from '../../models/monitoreo.model';
   templateUrl: 'admin-monitoreo-lista.html'
 })
 export class AdminMonitoreoListaComponent implements OnInit {
-  private monitoreoService = inject(MonitoreoService);
+  private readonly monitoreoService = inject(MonitoreoService);
 
   // Lista original que viene del servidor
   monitoreos = signal<MonitoreoListadoDTO[]>([]);
@@ -23,7 +23,7 @@ export class AdminMonitoreoListaComponent implements OnInit {
   // Lista filtrada
   monitoreosFiltrados = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
-    if (!term) return this.monitoreos(); // Si no hay búsqueda, devolvemos todo
+    if (!term) return this.monitoreos(); // Si no hay búsqueda, devolvemos todos
 
     return this.monitoreos().filter(m =>
       m.nombre.toLowerCase().includes(term) ||

@@ -7,9 +7,9 @@ import { Pagina } from '../models/pagina.model';
   providedIn: 'root'
 })
 export class PaginaService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  private resource = '/paginas';
+  private readonly resource = '/paginas';
 
   getPaginas(): Observable<Pagina[]> {
     return this.http.get<Pagina[]>(this.resource);

@@ -29,11 +29,11 @@ export class PlantUsuarioLista implements OnInit {
     );
   });
 
-  async ngOnInit() {
-    await this.cargarPlantillas();
+  ngOnInit() {
+    this.cargarPlantillas();
   }
 
-  async cargarPlantillas() {
+  private async cargarPlantillas() {
     try {
       this.cargando.set(true);
       const data = await firstValueFrom(this.plantillaUsuarioService.findAll());

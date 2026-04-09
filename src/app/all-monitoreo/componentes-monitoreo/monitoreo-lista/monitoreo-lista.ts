@@ -12,8 +12,8 @@ import {MonitoreoListadoDTO} from '../../../models/monitoreo.model';
   templateUrl: './monitoreo-lista.html',
 })
 export class MonitoreoLista implements OnInit, OnDestroy {
-  private monitoreoService = inject(MonitoreoService);
-  private authService = inject(AuthService);
+  private readonly monitoreoService = inject(MonitoreoService);
+  private readonly authService = inject(AuthService);
   private refreshSub?: Subscription;
 
   misMonitoreos = signal<MonitoreoListadoDTO[]>([]);

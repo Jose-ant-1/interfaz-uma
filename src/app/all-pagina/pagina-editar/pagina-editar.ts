@@ -12,9 +12,9 @@ import { Pagina } from '../../models/pagina.model';
   templateUrl: './pagina-editar.html'
 })
 export class PaginaEditar implements OnInit {
-  private paginaService = inject(PaginaService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  private readonly paginaService = inject(PaginaService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   // Signal para manejar los datos del formulario
   pagina = signal<Pagina | null>(null);

@@ -7,9 +7,9 @@ import { MonitoreoDTODetalle, MonitoreoListadoDTO } from '../models/monitoreo.mo
   providedIn: 'root'
 })
 export class MonitoreoService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  private resource = '/monitoreos';
+  private readonly resource = '/monitoreos';
 
   getMisMonitoreos(): Observable<MonitoreoListadoDTO[]> {
     return this.http.get<MonitoreoListadoDTO[]>(this.resource);

@@ -15,9 +15,9 @@ import { firstValueFrom } from 'rxjs';
   templateUrl: './plant-usuario-anyadir.html'
 })
 export class PlantUsuarioAnyadir implements OnInit {
-  private plantillaUsuarioService = inject(PlantillaUsuarioService);
-  private usuarioService = inject(UsuarioService);
-  private router = inject(Router);
+  private readonly plantillaUsuarioService = inject(PlantillaUsuarioService);
+  private readonly usuarioService = inject(UsuarioService);
+  private readonly router = inject(Router);
 
   nombreGrupo = '';
   usuariosDisponibles = signal<Usuario[]>([]);
@@ -40,7 +40,12 @@ export class PlantUsuarioAnyadir implements OnInit {
     );
   });
 
-  async ngOnInit() {
+  ngOnInit() {
+    this.inicializarComponente();
+  }
+
+  // 3. Movemos la lógica asíncrona aquí
+  private async inicializarComponente() {
     try {
       this.cargando.set(true);
       const [miPerfil, todosLosUsuarios] = await Promise.all([

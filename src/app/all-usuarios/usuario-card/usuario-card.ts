@@ -1,4 +1,4 @@
-import {Component, Input, Output, EventEmitter, input} from '@angular/core';
+import {Component, Output, EventEmitter, input} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Usuario } from '../../models/usuario.model';
 import {RouterLink} from '@angular/router';
@@ -11,10 +11,10 @@ import {RouterLink} from '@angular/router';
 })
 export class UsuarioCardComponent {
   usuario = input.required<Usuario>();
-  @Output() onDelete = new EventEmitter<number>();
+  @Output() Delete = new EventEmitter<number>();
 
   eliminar() {
-    this.onDelete.emit(this.usuario().id);
+    this.Delete.emit(this.usuario().id);
   }
 
 }

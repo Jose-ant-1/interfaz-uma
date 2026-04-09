@@ -5,8 +5,8 @@ import { Usuario } from '../models/usuario.model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private http = inject(HttpClient);
-  private resource = '/usuarios';
+  private readonly http = inject(HttpClient);
+  private readonly resource = '/usuarios';
 
   userRole = signal<string | null>(localStorage.getItem('userRole'));
   userName = signal<string | null>(localStorage.getItem('userName'));

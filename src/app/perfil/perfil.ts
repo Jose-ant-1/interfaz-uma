@@ -14,9 +14,9 @@ import { AuthService } from '../services/auth';
   templateUrl: './perfil.html'
 })
 export class PerfilComponent implements OnInit {
-  private monitoreoService = inject(MonitoreoService);
-  private usuarioService = inject(UsuarioService);
-  private authService = inject(AuthService);
+  private readonly monitoreoService = inject(MonitoreoService);
+  private readonly usuarioService = inject(UsuarioService);
+  private readonly authService = inject(AuthService);
 
   usuario = signal<Usuario | null>(null);
   monitoreosPropios = signal<MonitoreoListadoDTO[]>([]);
@@ -92,7 +92,7 @@ export class PerfilComponent implements OnInit {
       email: emailLimpio
     };
 
-    // Si todo esta bien, procedemos a la actualización
+    // Si  esta bien, procedemos a la actualización
     this.usuarioService.updatePerfil(datosParaEnviar).subscribe({
       next: (userActualizado) => {
         // Actualizamos sesión y estado local
@@ -146,7 +146,7 @@ export class PerfilComponent implements OnInit {
       next: () => {
         alert('Contraseña actualizada con éxito. Inicia sesión de nuevo.');
         this.authService.logout();
-        window.location.href = '/login';
+        globalThis.location.href = '/login';
       },
       error: (err) => {
         console.error("Error al actualizar pass", err);

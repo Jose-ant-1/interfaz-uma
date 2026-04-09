@@ -29,8 +29,8 @@ export class PlantMonitoreoLista implements OnInit {
     );
   });
 
-  async ngOnInit() {
-    await this.cargarPlantillas();
+  ngOnInit() {
+    this.cargarPlantillas();
   }
 
   async cargarPlantillas() {

@@ -11,10 +11,10 @@ import { Pagina } from '../../models/pagina.model';
 })
 export class PaginaCardComponent {
   @Input({ required: true }) pagina!: Pagina;
-  @Output() onDelete = new EventEmitter<number>();
+  @Output() Delete = new EventEmitter<number>();
 
   eliminar() {
-    this.onDelete.emit(this.pagina.id);
+    this.Delete.emit(this.pagina.id);
   }
 
   // SOLO PARA MOSTRAR: Quita el https:// para que no ocupe espacio visual

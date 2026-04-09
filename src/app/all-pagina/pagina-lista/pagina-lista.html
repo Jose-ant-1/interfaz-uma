@@ -28,7 +28,7 @@
   @for (p of paginas(); track p.id) {
     <app-pagina-card
       [pagina]="p"
-      (onDelete)="eliminar($event)"
+      (Delete)="eliminar($event)"
       class="w-full">
     </app-pagina-card>
   } @empty {

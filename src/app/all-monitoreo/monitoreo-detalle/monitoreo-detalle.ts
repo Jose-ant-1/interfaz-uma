@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink, Router } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MonitoreoService } from '../../services/monitoreo.service';
 import {MonitoreoDTODetalle} from '../../models/monitoreo.model';
@@ -11,9 +11,8 @@ import {MonitoreoDTODetalle} from '../../models/monitoreo.model';
   imports: [RouterLink, CommonModule]
 })
 export class MonitoreoDetalles implements OnInit {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private monitoreoService = inject(MonitoreoService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly monitoreoService = inject(MonitoreoService);
 
   // Signal con el tipo MonitoreoDTODetalle
   monitoreo = signal<MonitoreoDTODetalle | null>(null);

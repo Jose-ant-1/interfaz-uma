@@ -12,8 +12,8 @@ import { Pagina } from '../../models/pagina.model';
   templateUrl: './pagina-anyadir.html'
 })
 export class PaginaAnyadir {
-  private paginaService = inject(PaginaService);
-  private router = inject(Router);
+  private readonly paginaService = inject(PaginaService);
+  private readonly router = inject(Router);
 
   // Inicializamos la signal con un objeto vacío siguiendo la interfaz Pagina
   // El ID se omite ya que lo genera el backend al crear

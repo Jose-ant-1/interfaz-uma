@@ -7,8 +7,8 @@ import { PlantillaUsuario } from '../models/plantilla-usuario';
   providedIn: 'root',
 })
 export class PlantillaUsuarioService {
-  private http = inject(HttpClient);
-  private resource = '/plantillaUsuario';
+  private readonly http = inject(HttpClient);
+  private readonly resource = '/plantillaUsuario';
 
   findAll(): Observable<PlantillaUsuario[]> {
     return this.http.get<PlantillaUsuario[]>(this.resource);

@@ -10,8 +10,8 @@ import { AuthService } from '../services/auth';
   templateUrl: './login.html',
 })
 export class Login {
-  private router = inject(Router);
-  private authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
 
   email = '';
   password = '';

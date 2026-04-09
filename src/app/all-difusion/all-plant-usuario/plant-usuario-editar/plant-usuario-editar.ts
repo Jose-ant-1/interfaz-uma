@@ -27,7 +27,11 @@ export class PlantUsuarioEditar implements OnInit {
   seleccionados = signal<number[]>([]);
   cargando = signal(true);
 
-  async ngOnInit() {
+  ngOnInit() {
+    this.inicializarComponente();
+  }
+
+  private async inicializarComponente() {
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.idGrupo = Number(idParam);
