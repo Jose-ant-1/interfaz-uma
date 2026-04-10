@@ -37,7 +37,7 @@ export class PlantMonitoreoAnyadir implements OnInit {
     );
   });
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.monitoreoService.getMisMonitoreos().subscribe(res => {
       this.misMonitoreos.set(res);
     });
@@ -61,7 +61,7 @@ export class PlantMonitoreoAnyadir implements OnInit {
     return this.seleccionados().includes(id);
   }
 
-  guardar() {
+  guardar(): void {
     if (!this.nombrePlantilla || this.seleccionados().length === 0) return;
 
     this.cargando.set(true);
@@ -71,7 +71,7 @@ export class PlantMonitoreoAnyadir implements OnInit {
     };
 
     this.plantillaService.create(nuevaPlantilla).subscribe({
-      next: () => this.router.navigate(['/dashboard/difusion/administrar-plantillas']),
+      next: () => void this.router.navigate(['/dashboard/difusion/administrar-plantillas']),
       error: () => this.cargando.set(false)
     });
   }

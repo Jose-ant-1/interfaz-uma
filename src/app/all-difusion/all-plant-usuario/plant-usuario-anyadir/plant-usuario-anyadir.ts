@@ -40,7 +40,7 @@ export class PlantUsuarioAnyadir implements OnInit {
     );
   });
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.inicializarComponente();
   }
 
@@ -81,7 +81,7 @@ export class PlantUsuarioAnyadir implements OnInit {
     return this.seleccionados().includes(id);
   }
 
-  guardar() {
+  guardar(): void {
     if (!this.nombreGrupo || this.seleccionados().length === 0) return;
 
     this.cargando.set(true);
@@ -91,7 +91,7 @@ export class PlantUsuarioAnyadir implements OnInit {
     };
 
     this.plantillaUsuarioService.create(nuevoGrupo).subscribe({
-      next: () => this.router.navigate(['/dashboard/difusion/administrar-grupos']),
+      next: () => void this.router.navigate(['/dashboard/difusion/administrar-grupos']),
       error: () => this.cargando.set(false)
     });
   }

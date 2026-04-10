@@ -19,7 +19,7 @@ export class Login {
 
   loginReal() {
     this.authService.login(this.email, this.password).subscribe({
-      next: () => this.router.navigate(['/dashboard/monitoreos']),
+      next: () => void this.router.navigate(['/dashboard/monitoreos']),
       error: () => this.errorMessage.set('Error: Usuario o contraseña incorrectos')
     });
   }

@@ -20,7 +20,7 @@ export class UsuarioEditar implements OnInit {
   usuario = signal<Usuario | null>(null);
   cargando = signal(true);
 
-  ngOnInit() {
+  ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (id) {
       this.usuarioService.getUsuarioById(id).subscribe({
@@ -29,7 +29,7 @@ export class UsuarioEditar implements OnInit {
           this.usuario.set({ ...data, contrasenia: '' });
           this.cargando.set(false);
         },
-        error: () => this.router.navigate(['/dashboard/usuarios'])
+        error: () => void this.router.navigate(['/dashboard/usuarios'])
       });
     }
   }
@@ -42,9 +42,10 @@ export class UsuarioEditar implements OnInit {
 
     // Enviamos el objeto directamente, ya que 'usuario()' tiene la estructura correcta
     this.usuarioService.updateUsuario(currentUsuario.id, currentUsuario).subscribe({
-      next: () => this.router.navigate(['/dashboard/usuarios']),
+      next: () => void this.router.navigate(['/dashboard/usuarios']),
       error: (err) => {
         this.cargando.set(false);
+        console.error(err);
         alert('Error al actualizar. Revisa que no se repita el nombre o el correo.');
       }
     });

@@ -30,7 +30,7 @@ export class PaginaEditar implements OnInit {
       // Cargamos los datos actuales de la página desde el backend
       this.paginaService.getPaginaById(+id).subscribe({
         next: (data) => this.pagina.set(data),
-        error: () => this.router.navigate(['/dashboard/paginas'])
+        error: () => void this.router.navigate(['/dashboard/paginas'])
       });
     }
   }
@@ -42,14 +42,20 @@ export class PaginaEditar implements OnInit {
     if (this.esEdicion()) {
       // Si es edición, usamos el updatePagina
       this.paginaService.updatePagina(data.id, data).subscribe({
-        next: () => this.router.navigate(['/dashboard/paginas']),
-        error: (err) => alert('Error al actualizar la página')
+        next: () => void this.router.navigate(['/dashboard/paginas']),
+        error: (err) => {
+          console.error(err);
+          alert('Error al actualizar la página');
+        }
       });
     } else {
       // Si es creación, usamos createPagina
       this.paginaService.createPagina(data).subscribe({
-        next: () => this.router.navigate(['/dashboard/paginas']),
-        error: (err) => alert('Error al crear la página')
+        next: () => void this.router.navigate(['/dashboard/paginas']),
+        error: (err) => {
+          console.error(err);
+          alert('Error al crear la página');
+        }
       });
     }
   }
