@@ -12,6 +12,7 @@ import {UsuarioCardComponent} from '../usuario-card/usuario-card';
   templateUrl: './usuario-lista.html'
 })
 export class UsuariosListComponent implements OnInit {
+
   private readonly usuarioService = inject(UsuarioService);
   private readonly buscador$ = new Subject<string>();
 
@@ -61,4 +62,5 @@ export class UsuariosListComponent implements OnInit {
       });
     }
   }
+
 }

@@ -27,7 +27,6 @@ export class MonitoreoService {
     return this.http.get<MonitoreoDTODetalle>(`${this.resource}/${id}`);
   }
 
-
   crearMonitoreo(payload: { nombre: string, paginaUrl: string, minutos: number, repeticiones: number }): Observable<MonitoreoDTODetalle> {
     return this.http.post<MonitoreoDTODetalle>(this.resource, payload);
   }

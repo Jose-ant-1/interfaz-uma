@@ -18,6 +18,9 @@ export class Login {
   errorMessage = signal('');
 
   loginReal() {
+    // Limpiamos el error antes de empezar
+    this.errorMessage.set('');
+
     this.authService.login(this.email, this.password).subscribe({
       next: () => void this.router.navigate(['/dashboard/monitoreos']),
       error: () => this.errorMessage.set('Error: Usuario o contraseña incorrectos')
