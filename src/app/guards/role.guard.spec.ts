@@ -40,6 +40,63 @@ describe('roleGuard', () => {
     expect(roleGuard).toBeTruthy();
   });
 
+  describe('Pilar: Validación de Negocio (Control de Acceso VIP)', () => {
+
+    // 1. CAMINO FELIZ: Acceso por Servicio
+    it('debería permitir acceso (true) si el AuthService confirma rol ADMIN', () => {
+      mockAuthService.userRole.set('ADMIN');
+
+      const result = executeGuard();
+
+      expect(result).toBe(true);
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    // 2. CAMINO FELIZ: Acceso por Persistencia (LocalStorage)
+    it('debería permitir acceso (true) si el servicio es null pero localStorage tiene ADMIN', () => {
+      mockAuthService.userRole.set(null);
+      vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('ADMIN');
+
+      const result = executeGuard();
+
+      expect(result).toBe(true);
+    });
+
+    // 3. NEGOCIO: Denegación por Rol Insuficiente
+    it('debería denegar acceso (false) si el rol es USER', () => {
+      mockAuthService.userRole.set('USER');
+
+      const result = executeGuard();
+
+      expect(result).toBe(false);
+      // PILAR: INTEGRIDAD DE INTERFAZ - Redirección forzosa
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard/monitoreos']);
+    });
+
+    // 4. ROBUSTEZ: Sensibilidad a Mayúsculas (Case Sensitivity)
+    it('debería denegar el acceso si el rol es "admin" (en minúsculas)', () => {
+      // El contrato de negocio suele ser en mayúsculas. Probamos robustez.
+      mockAuthService.userRole.set('admin');
+
+      const result = executeGuard();
+
+      // Si el código no hace .toUpperCase(), esto debería fallar (redirigir)
+      expect(result).toBe(false);
+      expect(mockRouter.navigate).toHaveBeenCalled();
+    });
+
+    // 5. SANITIZACIÓN: Roles con espacios
+    it('debería denegar el acceso si el rol en localStorage tiene espacios " ADMIN "', () => {
+      mockAuthService.userRole.set(null);
+      vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(' ADMIN ');
+
+      const result = executeGuard();
+
+      // Pilar de Sanitización: Un string sucio no debe validar como ADMIN
+      expect(result).toBe(false);
+    });
+  });
+
   describe('Lógica de Autorización (Los 4 Pilares)', () => {
 
     // 1. CAMINO FELIZ
@@ -103,6 +160,86 @@ describe('roleGuard', () => {
       expect(mockRouter.navigate).toHaveBeenCalled();
     });
   });
+
+  describe('Pilar: Integridad de Flujo (Coherencia de Navegación)', () => {
+
+    // 1. INTEGRIDAD DE LA REDIRECCIÓN
+    it('debería ejecutar una navegación "agresiva" a la ruta de monitoreos si falla la validación', () => {
+      mockAuthService.userRole.set('USER');
+
+      const result = executeGuard();
+
+      // Integridad: El resultado debe ser false para cancelar la ruta actual
+      expect(result).toBe(false);
+      // Efecto secundario: Debe disparar la redirección configurada
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard/monitoreos']);
+    });
+
+    // 2. INTEGRIDAD DE LA FUENTE (Verdad Única)
+    it('debería ignorar el localStorage si el AuthService tiene un rol definido (aunque sea USER)', () => {
+      // Escenario: El servicio dice que eres USER (verdad actual)
+      // El localStorage tiene un resto de una sesión anterior como ADMIN
+      mockAuthService.userRole.set('USER');
+      const storageSpy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('ADMIN');
+
+      const result = executeGuard();
+
+      // Integridad: La memoria viva (Signal) debe mandar sobre la persistencia
+      expect(result).toBe(false);
+      expect(storageSpy).not.toHaveBeenCalled(); // Si el servicio tiene valor, no debería ni mirar el storage
+    });
+
+    // 3. RESILIENCIA: Estado de Carga / Indeterminado
+    it('debería bloquear el flujo y redirigir si tanto el servicio como el storage devuelven null', () => {
+      mockAuthService.userRole.set(null);
+      vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null);
+
+      const result = executeGuard();
+
+      // Integridad: Ante el vacío absoluto, la aplicación no debe quedarse colgada
+      expect(result).toBe(false);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard/monitoreos']);
+    });
+  });
+
+  describe('Pilar: Robustez y Casos de Borde (Blindaje)', () => {
+
+    // 1. SANITIZACIÓN: Espacios y Mayúsculas en LocalStorage
+    it('debería denegar el acceso si el localStorage tiene el rol " admin " (sucio)', () => {
+      mockAuthService.userRole.set(null);
+      // Simulamos un valor guardado con espacios o en minúsculas
+      vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(' admin ');
+
+      const result = executeGuard();
+
+      // Robustez: La comparación literal 'ADMIN' fallará, lo cual es correcto por seguridad
+      expect(result).toBe(false);
+      expect(mockRouter.navigate).toHaveBeenCalled();
+    });
+
+    // 2. CASO DE BORDE: El "null" como cadena de texto
+    it('debería denegar el acceso si el localStorage tiene guardado el string "null"', () => {
+      mockAuthService.userRole.set(null);
+      vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('null'); // Error común de persistencia
+
+      const result = executeGuard();
+
+      expect(result).toBe(false);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard/monitoreos']);
+    });
+
+    // 3. ROBUSTEZ: Caracteres especiales o roles inexistentes
+    it('debería denegar acceso ante roles no contemplados (ej. "SUPERUSER")', () => {
+      mockAuthService.userRole.set('SUPERUSER');
+
+      const result = executeGuard();
+
+      // Validación de Negocio: Si no es EXACTAMENTE 'ADMIN', no pasa
+      expect(result).toBe(false);
+      expect(mockRouter.navigate).toHaveBeenCalled();
+    });
+  });
+
 
 
 });

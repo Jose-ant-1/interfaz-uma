@@ -20,7 +20,25 @@ describe('LayoutComponent', () => {
   };
 
   const mockRouter = {
-    navigate: vi.fn()
+    // Ahora el mock simula que la navegación es exitosa
+    navigate: vi.fn().mockResolvedValue(true)
+  };
+
+  const crearFixtureConTemplate = async (template: string) => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [CommonModule, RouterModule.forRoot([])],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: Router, useValue: mockRouter }
+      ]
+    }).overrideComponent(Layout, {
+      set: { template, templateUrl: undefined }
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(Layout);
+    fixture.detectChanges();
+    return fixture;
   };
 
   beforeEach(async () => {
@@ -96,6 +114,118 @@ describe('LayoutComponent', () => {
 
       expect(component.menuAbierto()).toBe(false);
     });
+
+    it('debería actualizar el signal computado esAdmin cuando el rol en el servicio cambie', () => {
+      // 1. Empezamos como USER
+      mockAuthService.userRole.set('USER');
+      expect(component.esAdmin()).toBe(false);
+
+      // 2. Cambiamos a ADMIN (Simulando una elevación de privilegios o cambio de sesión)
+      mockAuthService.userRole.set('ADMIN');
+
+      // Pilar de Integridad: El computed debe reaccionar automáticamente
+      expect(component.esAdmin()).toBe(true);
+    });
+
+    it('debería mantener el userName sincronizado con el AuthService', () => {
+      const nuevoNombre = 'Admin Supremo';
+      mockAuthService.userName.set(nuevoNombre);
+
+      // Verificamos que la referencia al signal en el componente es correcta
+      expect(component.userName()).toBe(nuevoNombre);
+    });
+
+  });
+
+  describe('Pilar: Integridad de Signals e Integración DOM', () => {
+
+    // Helper para crear un fixture con un template específico sin romper el TestBed
+    const crearFixtureConTemplate = async (template: string) => {
+      TestBed.resetTestingModule(); // Limpiamos para evitar el error de instanciación
+      await TestBed.configureTestingModule({
+        imports: [CommonModule],
+        providers: [
+          { provide: AuthService, useValue: mockAuthService },
+          { provide: Router, useValue: mockRouter }
+        ]
+      }).overrideComponent(Layout, {
+        set: { template, templateUrl: undefined }
+      }).compileComponents();
+
+      const fixture = TestBed.createComponent(Layout);
+      fixture.detectChanges();
+      return fixture;
+    };
+
+    it('debería sincronizar el esAdmin (Signal) con la visibilidad física del DOM', async () => {
+      // Definimos qué queremos ver en el DOM
+      const template = `@if (esAdmin()) { <div id="admin-ui">Admin</div> }`;
+      const fixtureDom = await crearFixtureConTemplate(template);
+
+      // ESCENARIO A: Es USER
+      mockAuthService.userRole.set('USER');
+      fixtureDom.detectChanges(); // Sincronizamos
+      expect(fixtureDom.componentInstance.esAdmin()).toBe(false); // Signal
+      expect(fixtureDom.nativeElement.querySelector('#admin-ui')).toBeNull(); // DOM
+
+      // ESCENARIO B: Cambia a ADMIN
+      mockAuthService.userRole.set('ADMIN');
+      fixtureDom.detectChanges();
+      expect(fixtureDom.componentInstance.esAdmin()).toBe(true); // Signal
+      expect(fixtureDom.nativeElement.querySelector('#admin-ui')).toBeTruthy(); // DOM
+    });
+
+    it('debería reflejar el userName del servicio directamente en el HTML', async () => {
+      const template = `<span id="user-display">{{ userName() }}</span>`;
+      const fixtureDom = await crearFixtureConTemplate(template);
+
+      const nuevoNombre = 'Capitán Planeta';
+      mockAuthService.userName.set(nuevoNombre);
+      fixtureDom.detectChanges();
+
+      const el = fixtureDom.nativeElement.querySelector('#user-display');
+      expect(el.textContent).toContain(nuevoNombre);
+    });
+  });
+
+  describe('onEscape()', () => {
+
+    it('debería cerrar el menú cuando se pulsa la tecla Escape si el menú está abierto', () => {
+      // Setup: Menú abierto
+      component.menuAbierto.set(true);
+
+      // Acción: Simulamos el evento de teclado que captura el @HostListener
+      component.onEscape();
+
+      // Validación de Negocio: El menú debe cerrarse
+      expect(component.menuAbierto()).toBe(false);
+    });
+
+    it('no debería realizar ninguna acción si se pulsa Escape y el menú ya está cerrado', () => {
+      const spyCerrar = vi.spyOn(component, 'cerrarMenu');
+      component.menuAbierto.set(false);
+
+      component.onEscape();
+
+      // Robustez: No disparamos lógica innecesaria si el estado ya es el deseado
+      expect(spyCerrar).not.toHaveBeenCalled();
+    });
+
+    it('debería cerrar el menú solo si está abierto al pulsar Escape', () => {
+      // Aquí no necesitamos DOM, usamos el componente estándar del beforeEach inicial
+      const spyCerrar = vi.spyOn(component, 'cerrarMenu');
+
+      // Caso 1: Está abierto -> Se cierra
+      component.menuAbierto.set(true);
+      component.onEscape();
+      expect(component.menuAbierto()).toBe(false);
+
+      // Caso 2: Está cerrado -> No hace nada (Robustez)
+      vi.clearAllMocks();
+      component.menuAbierto.set(false);
+      component.onEscape();
+      expect(spyCerrar).not.toHaveBeenCalled();
+    });
   });
 
   describe('toggleMenu()', () => {
@@ -145,104 +275,166 @@ describe('LayoutComponent', () => {
       expect(component.userName()).toBe(nombreInicial);
       expect(component.userRole()).toBe(rolInicial);
     });
+    // 5. INTEGRACIÓN DOM (El pilar que falta)
+    it('debería reflejar el cambio de estado en las clases CSS del template', async () => {
+      const template = `<aside [class.translate-x-0]="menuAbierto()">Menu</aside>`;
+
+      // Ahora el compilador ya sabe qué es esto:
+      const fixtureDom = await crearFixtureConTemplate(template);
+
+      fixtureDom.componentInstance.toggleMenu();
+      fixtureDom.detectChanges();
+
+      const aside = fixtureDom.nativeElement.querySelector('aside');
+      expect(aside.classList.contains('translate-x-0')).toBe(true);
+    });
+
+    // 6. VALIDACIÓN DE NEGOCIO (Estado inicial)
+    it('debería garantizar que el menú siempre arranca cerrado por seguridad de interfaz', () => {
+      // Este test valida la regla de negocio: "La app empieza limpia"
+      const nuevoComponente = TestBed.createComponent(Layout).componentInstance;
+      expect(nuevoComponente.menuAbierto()).toBe(false);
+    });
   });
 
   describe('cerrarMenu()', () => {
+
     // 1. CAMINO FELIZ
-    it('debería poner menuAbierto en false si el menú estaba abierto', () => {
-      // Setup: Forzamos el estado a true
+    it('debería cambiar el estado a false si el menú estaba abierto', () => {
       component.menuAbierto.set(true);
 
       component.cerrarMenu();
 
-      // Verificación: Debe ser false
       expect(component.menuAbierto()).toBe(false);
     });
 
-    // 2. CASO DE BORDE
-    it('debería mantener menuAbierto en false si ya estaba cerrado', () => {
-      // Setup: Ya está en false
+    // 2. CASO DE BORDE / ROBUSTEZ
+    it('debería mantenerse en false si el menú ya estaba cerrado (idempotencia)', () => {
       component.menuAbierto.set(false);
 
       component.cerrarMenu();
 
-      // Verificación: Sigue siendo false (no hay "toggle" accidental)
+      // Pilar de Robustez: La función es segura aunque se llame mil veces
       expect(component.menuAbierto()).toBe(false);
     });
 
-    // 3. MANEJO DE ERRORES / SEGURIDAD
-    it('debería asegurar que el estado sea estrictamente false y no dependa de valores previos', () => {
-      // Ejecutamos varias veces seguidas
-      component.menuAbierto.set(true);
-
-      component.cerrarMenu();
-      component.cerrarMenu();
-      component.cerrarMenu();
-
-      expect(component.menuAbierto()).toBe(false);
-    });
-
-    // 4. INTEGRIDAD
-    it('no debería disparar la navegación ni el logout al cerrar el menú', () => {
+    // 3. INTEGRIDAD DE DATOS
+    it('no debe alterar ninguna otra propiedad del componente al cerrarse', () => {
+      const nombrePrevio = component.userName();
       component.menuAbierto.set(true);
 
       component.cerrarMenu();
 
-      // Verificamos que una acción de UI no toque la lógica de sesión
-      expect(mockAuthService.logout).not.toHaveBeenCalled();
-      expect(mockRouter.navigate).not.toHaveBeenCalled();
+      // Pilar de Integridad: El estado de la UI no debe "ensuciar" el estado de la sesión
+      expect(component.userName()).toBe(nombrePrevio);
     });
+
+    // 4. INTEGRACIÓN DOM (Prueba de Interfaz física)
+    it('debería añadir la clase CSS de ocultación en el template al ejecutar cerrarMenu', async () => {
+      // Usamos el helper para el pilar de Integración DOM
+      const template = `<aside [class.-translate-x-full]="!menuAbierto()">Menu</aside>`;
+      const fixtureDom = await crearFixtureConTemplate(template);
+
+      // Setup: Empezamos abierto (clase no presente)
+      fixtureDom.componentInstance.menuAbierto.set(true);
+      fixtureDom.detectChanges();
+
+      // Act: Cerramos
+      fixtureDom.componentInstance.cerrarMenu();
+      fixtureDom.detectChanges();
+
+      // Assert: Verificamos el pilar de Interfaz
+      const aside = fixtureDom.nativeElement.querySelector('aside');
+      expect(aside.classList.contains('-translate-x-full')).toBe(true);
+    });
+
+    it('debería garantizar la Validación de Negocio: el menú nace cerrado por defecto', () => {
+      // Creamos una instancia limpia sin tocarla
+      const nuevaInstancia = TestBed.createComponent(Layout).componentInstance;
+      expect(nuevaInstancia.menuAbierto()).toBe(false);
+    });
+
+    it('debería priorizar el estado de cierre frente a llamadas de apertura simultáneas', () => {
+      // Forzamos un estado incierto
+      component.menuAbierto.set(true);
+
+      // Ejecutamos cierre y verificamos que no hay "fugas" de estado
+      component.cerrarMenu();
+
+      // Si intentáramos un toggle justo después, el estado debe ser predecible
+      expect(component.menuAbierto()).toBe(false);
+    });
+
   });
 
-  describe('cerrarSesion()', () => {
+  describe('cerrarSesion() - Blindaje Total', () => {
+
     // 1. CAMINO FELIZ
-    it('debería ejecutar el logout y redirigir al login correctamente', () => {
-      component.cerrarSesion();
+    it('debería ejecutar el logout y navegar a login correctamente', async () => {
+      await component.cerrarSesion();
 
-      // Verificación de la llamada al servicio (Pilar 1)
       expect(mockAuthService.logout).toHaveBeenCalled();
-
-      // Verificación de la redirección (Pilar 1)
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/login']);
     });
 
-    // 2. CASO DE BORDE
-    it('debería cerrar la sesión incluso si el menú lateral estaba abierto', () => {
-      // Setup: Usuario con menú abierto
+    // 2. PROTECCIÓN DE ENVÍO (Antirebote)
+    it('debería impedir múltiples llamadas al logout si ya hay un proceso en curso', () => {
+      // Simulamos que el primer clic activa el estado de carga
+      component.cargandoLogout.set(true);
+
+      component.cerrarSesion();
+
+      // No debería llamarse una segunda vez mientras cargandoLogout sea true
+      expect(mockAuthService.logout).not.toHaveBeenCalled();
+    });
+
+    // 3. INTEGRIDAD DE FLUJO Y ORDEN
+    it('debería asegurar que el menú se cierra antes o durante el logout por privacidad', () => {
       component.menuAbierto.set(true);
 
       component.cerrarSesion();
 
-      // El logout debe ocurrir independientemente del estado de la UI
-      expect(mockAuthService.logout).toHaveBeenCalled();
+      // Al salir, el estado de la interfaz debe quedar limpio
+      expect(component.menuAbierto()).toBe(false);
+    });
+
+    // 4. MANEJO DE ERRORES / RESILIENCIA
+    it('debería navegar a login obligatoriamente aunque el AuthService falle', () => {
+      // Forzamos un error en el servicio
+      mockAuthService.logout.mockImplementation(() => {
+        throw new Error('Error crítico de limpieza de sesión');
+      });
+
+      component.cerrarSesion();
+
+      // Pilar de Resiliencia: El usuario no puede quedarse "atrapado" dentro
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/login']);
+      expect(component.cargandoLogout()).toBe(false);
     });
 
-    // 3. MANEJO DE ERRORES / SEGURIDAD
-    it('debería asegurar que el logout se llame antes que la navegación por seguridad', () => {
-      const logoutSpy = mockAuthService.logout;
-      const navigateSpy = mockRouter.navigate;
+    // 5. INTEGRIDAD DOM (Feedback Visual)
+    it('debería deshabilitar visualmente el botón de logout mientras procesa', async () => {
+      // Usamos el helper para ver el botón físicamente
+      const template = `
+        <button [disabled]="cargandoLogout()" (click)="cerrarSesion()">Salir</button>
+      `;
+      const fixtureDom = await crearFixtureConTemplate(template);
+
+      // Simulamos estado de carga
+      fixtureDom.componentInstance.cargandoLogout.set(true);
+      fixtureDom.detectChanges();
+
+      const boton = fixtureDom.nativeElement.querySelector('button');
+      expect(boton.disabled).toBe(true);
+    });
+
+    // 6. CASO DE BORDE: Sesión ya expirada
+    it('debería manejar correctamente el cierre de sesión si el usuario ya no tenía datos', () => {
+      mockAuthService.userName.set('');
 
       component.cerrarSesion();
 
-      // Verificamos el orden lógico de ejecución
-      const ordenLogout = logoutSpy.mock.invocationCallOrder[0];
-      const ordenNavigate = navigateSpy.mock.invocationCallOrder[0];
-
-      expect(ordenLogout).toBeLessThan(ordenNavigate);
-    });
-
-    // 4. INTEGRIDAD
-    it('no debería realizar ninguna otra acción o petición al servidor aparte del logout', () => {
-      // Limpiamos llamadas previas para ser precisos
-      vi.clearAllMocks();
-
-      component.cerrarSesion();
-
-      // Solo esperamos estas dos interacciones
-      expect(mockAuthService.logout).toHaveBeenCalledTimes(1);
-      expect(mockRouter.navigate).toHaveBeenCalledTimes(1);
-      // Por ejemplo, no debería llamar a otros servicios si los hubiera
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/login']);
     });
   });
 

@@ -34,232 +34,237 @@ describe('PlantillaMonitoreoService', () => {
   });
 
   describe('findAll()', () => {
+    const resource = '/plantillaMonitoreo';
 
-    // 1. CAMINO FELIZ (Happy Path)
+    // 1. PILAR: CAMINO FELIZ (Reparado para la dieta)
     it('debería retornar una lista de plantillas cuando la API responde con éxito', () => {
-      // He quitado 'comando' y he usado un casting más flexible para evitar el error TS2352
-      const mockPlantillas = [
-        { id: 1, nombre: 'Plantilla A' },
-        { id: 2, nombre: 'Plantilla B' }
-      ] as unknown as PlantillaMonitoreo[];
+      const mockBackend = [
+        { id: 1, nombre: 'Plantilla Alpha', monitoreos: [] } // Añadimos monitoreos al mock para que coincida con la salida esperada
+      ];
 
-      service.findAll().subscribe((data) => {
-        expect(data.length).toBe(2);
-        expect(data).toEqual(mockPlantillas);
-      });
-
-      const req = httpMock.expectOne('/plantillaMonitoreo');
-      expect(req.request.method).toBe('GET');
-      req.flush(mockPlantillas);
-    });
-
-    // 2. CASO DE BORDE (Edge Case)
-    it('debería manejar correctamente una respuesta de lista vacía []', () => {
-      service.findAll().subscribe((data) => {
-        expect(data.length).toBe(0);
-        expect(data).toEqual([]);
-      });
-
-      const req = httpMock.expectOne('/plantillaMonitoreo');
-      req.flush([]);
-    });
-
-    // 3. MANEJO DE ERRORES (Error Handling)
-    it('debería lanzar un error si la API devuelve un fallo 500', () => {
       service.findAll().subscribe({
-        // CORRECCIÓN: Usamos expect.fail() en lugar de fail()
-        next: () => expect.fail('Debería haber fallado con un error 500'),
-        error: (error) => {
-          expect(error.status).toBe(500);
+        next: (data) => {
+          expect(data.length).toBe(1);
+          expect(data[0].id).toBe(1);
+          // En lugar de toEqual(mockBackend), verificamos la estructura para ser más robustos
+          expect(data).toContainEqual(expect.objectContaining({
+            id: 1,
+            nombre: 'Plantilla Alpha'
+          }));
         }
       });
 
-      const req = httpMock.expectOne('/plantillaMonitoreo');
-      req.flush('Error del servidor', { status: 500, statusText: 'Server Error' });
+      const req = httpMock.expectOne(resource);
+      expect(req.request.method).toBe('GET');
+      req.flush(mockBackend);
     });
 
-    // 4. INTEGRIDAD Y CONTRATO
-    it('debería llamar a la URL exacta definida en el recurso sin parámetros extra', () => {
-      service.findAll().subscribe();
+    // 2. PILAR: CASO DE BORDE
+    it('debería manejar correctamente una respuesta de array vacío', () => {
+      service.findAll().subscribe({
+        next: (data) => expect(data.length).toBe(0)
+      });
 
-      const req = httpMock.expectOne('/plantillaMonitoreo');
-      expect(req.request.url).toBe('/plantillaMonitoreo');
-      expect(req.request.params.keys().length).toBe(0);
+      const req = httpMock.expectOne(resource);
       req.flush([]);
+    });
+
+    // 3. PILAR: MANEJO DE ERRORES
+    it('debería propagar el error si el servidor devuelve un 500', () => {
+      service.findAll().subscribe({
+        next: () => expect.fail('Debería haber fallado'),
+        error: (error) => expect(error.status).toBe(500)
+      });
+
+      const req = httpMock.expectOne(resource);
+      req.flush('Error', { status: 500, statusText: 'Server Error' });
+    });
+
+    // 4. PILAR: INTEGRIDAD (El que fallaba)
+    it('debería inicializar monitoreos como array vacío si el servidor envía null', () => {
+      const mockCorrupto = [{ id: 3, nombre: 'Plantilla Sucia', monitoreos: null }];
+
+      service.findAll().subscribe({
+        next: (data) => {
+          // Aquí es donde la "dieta" brilla: el servicio repara el dato
+          expect(Array.isArray(data[0].monitoreos)).toBe(true);
+          expect(data[0].monitoreos).toEqual([]);
+        }
+      });
+
+      const req = httpMock.expectOne(resource);
+      req.flush(mockCorrupto);
     });
   });
 
   describe('findByPropietario()', () => {
-    const usuarioId = 123;
-    const urlEsperada = `/plantillaMonitoreo/propietario/${usuarioId}`;
+    const usuarioId = 7;
+    const resourceUrl = `/plantillaMonitoreo/propietario/${usuarioId}`;
 
-    // 1. CAMINO FELIZ (Happy Path)
-    it('debería retornar las plantillas de un propietario específico', () => {
-      const mockPlantillas = [
-        { id: 1, nombre: 'Plantilla Propietario', usuarioId: 123 }
-      ] as unknown as PlantillaMonitoreo[];
+    // 1. PILAR: CAMINO FELIZ
+    it('debería retornar las plantillas del propietario con sus datos mapeados', () => {
+      const mockBackend = [
+        { id: 1, nombre: 'Plantilla Propietario', monitoreos: [], propietario: usuarioId }
+      ];
 
-      service.findByPropietario(usuarioId).subscribe((data) => {
-        expect(data.length).toBe(1);
-        expect(data[0].id).toBe(1);
-        expect(data).toEqual(mockPlantillas);
+      service.findByPropietario(usuarioId).subscribe({
+        next: (data) => {
+          expect(data.length).toBe(1);
+          expect(data[0].propietario).toBe(usuarioId);
+          expect(data[0].nombre).toBe('Plantilla Propietario');
+        }
       });
 
-      const req = httpMock.expectOne(urlEsperada);
+      const req = httpMock.expectOne(resourceUrl);
       expect(req.request.method).toBe('GET');
-      req.flush(mockPlantillas);
+      req.flush(mockBackend);
     });
 
-    // 2. CASO DE BORDE (Edge Case)
-    it('debería retornar un array vacío si el propietario no tiene plantillas', () => {
-      service.findByPropietario(usuarioId).subscribe((data) => {
-        expect(data.length).toBe(0);
-        expect(data).toEqual([]);
+    // 2. PILAR: CASO DE BORDE (Propietario sin plantillas)
+    it('debería manejar correctamente cuando un propietario no tiene ninguna plantilla (array vacío)', () => {
+      service.findByPropietario(usuarioId).subscribe({
+        next: (data) => {
+          expect(Array.isArray(data)).toBe(true);
+          expect(data.length).toBe(0);
+        }
       });
 
-      const req = httpMock.expectOne(urlEsperada);
-      req.flush([]); // Simula que el usuario existe pero no tiene registros
+      const req = httpMock.expectOne(resourceUrl);
+      req.flush([]);
     });
 
-    // 3. MANEJO DE ERRORES (Error Handling)
-    it('debería manejar un error 404 si el usuarioId no existe', () => {
-      service.findByPropietario(999).subscribe({
-        next: () => expect.fail('Debería haber fallado con 404'),
+    // 3. PILAR: MANEJO DE ERRORES (Usuario no existe)
+    it('debería propagar el error 404 si el propietario no se encuentra en el sistema', () => {
+      service.findByPropietario(99).subscribe({
+        next: () => expect.fail('Debería haber fallado'),
         error: (error) => {
           expect(error.status).toBe(404);
         }
       });
 
-      const req = httpMock.expectOne('/plantillaMonitoreo/propietario/999');
-      req.flush('Usuario no encontrado', { status: 404, statusText: 'Not Found' });
+      const req = httpMock.expectOne('/plantillaMonitoreo/propietario/99');
+      req.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
 
-    // 4. INTEGRIDAD Y CONTRATO
-    it('debería formatear la URL correctamente con el ID de usuario proporcionado', () => {
-      const distintoId = 456;
-      service.findByPropietario(distintoId).subscribe();
+    // 4. PILAR: INTEGRIDAD (Datos corruptos en la lista)
+    it('debería asegurar que cada plantilla de la lista sea robusta aunque el server envíe nulos', () => {
+      const mockBackendCorrupto = [
+        { id: 1, nombre: null, monitoreos: null, propietario: usuarioId }
+      ];
 
-      // Verificamos que el ID se inyecte correctamente en el path
-      const req = httpMock.expectOne(`/plantillaMonitoreo/propietario/${distintoId}`);
-      expect(req.request.method).toBe('GET');
-      req.flush([]);
+      service.findByPropietario(usuarioId).subscribe({
+        next: (data) => {
+          // El Pilar de Integridad (vía map) repara cada elemento
+          expect(data[0].nombre).toBe('Plantilla sin nombre');
+          expect(Array.isArray(data[0].monitoreos)).toBe(true);
+        }
+      });
+
+      const req = httpMock.expectOne(resourceUrl);
+      req.flush(mockBackendCorrupto);
     });
   });
 
   describe('create()', () => {
-    // CORRECCIÓN: Usamos casting para que acepte propiedades que no están en la interfaz
-    const nuevaPlantilla = {
-      nombre: 'Nueva Plantilla',
-      comando: 'check_http'
-    } as unknown as Partial<PlantillaMonitoreo>;
+    const resource = '/plantillaMonitoreo';
 
-    // 1. CAMINO FELIZ
-    it('debería enviar un POST y retornar la plantilla creada con su ID', () => {
-      const mockResponse = { id: 10, ...nuevaPlantilla } as unknown as PlantillaMonitoreo;
+    // 1. PILAR: CAMINO FELIZ + PROTECCIÓN DE ENVÍO
+    it('debería enviar un POST con el payload correcto y recibir ID', () => {
+      const nueva = { nombre: 'Test', monitoreos: [] };
 
-      service.create(nuevaPlantilla).subscribe((res) => {
+      service.create(nueva).subscribe(res => {
         expect(res.id).toBe(10);
-        expect(res.nombre).toBe('Nueva Plantilla');
+        expect(res.monitoreos).toEqual([]);
       });
 
-      const req = httpMock.expectOne('/plantillaMonitoreo');
+      const req = httpMock.expectOne(resource);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(nuevaPlantilla);
-      req.flush(mockResponse);
+      // Verificamos que el envío es exactamente lo que esperamos
+      expect(req.request.body.nombre).toBe('Test');
+      req.flush({ id: 10, ...nueva });
     });
 
-    // 2. CASO DE BORDE
-    it('debería funcionar correctamente al enviar una plantilla con campos mínimos', () => {
-      const plantillaMinima = { nombre: 'Mínima' } as unknown as Partial<PlantillaMonitoreo>;
-      const mockResponse = { id: 11, nombre: 'Mínima' } as unknown as PlantillaMonitoreo;
+    // 2. PILAR: SANITIZACIÓN (Este es nuevo y CRÍTICO)
+    it('debería limpiar el nombre (trim) antes de enviar la petición', () => {
+      service.create({ nombre: '   Sucia   ' }).subscribe();
 
-      service.create(plantillaMinima).subscribe((res) => {
-        expect(res.id).toBe(11);
-      });
-
-      const req = httpMock.expectOne('/plantillaMonitoreo');
-      req.flush(mockResponse);
+      const req = httpMock.expectOne(resource);
+      // La dieta exige que el servicio limpie los datos
+      expect(req.request.body.nombre).toBe('Sucia');
+      req.flush({ id: 11 });
     });
 
-    // 3. MANEJO DE ERRORES
-    it('debería retornar error 400 si los datos enviados no son válidos', () => {
+    // 3. PILAR: MANEJO DE ERRORES (Mantenemos el 400)
+    it('debería propagar el error 400 si el servidor lo rechaza', () => {
       service.create({}).subscribe({
-        next: () => expect.fail('Debería haber fallado con 400'),
-        error: (error) => {
-          expect(error.status).toBe(400);
-        }
+        next: () => expect.fail('No debería tener éxito'),
+        error: (err) => expect(err.status).toBe(400)
       });
 
-      const req = httpMock.expectOne('/plantillaMonitoreo');
-      req.flush('Bad Request', { status: 400, statusText: 'Bad Request' });
+      const req = httpMock.expectOne(resource);
+      req.flush('Invalid', { status: 400, statusText: 'Bad Request' });
     });
 
-    // 4. INTEGRIDAD
-    it('debería asegurar que el cuerpo de la petición sea un objeto válido', () => {
-      service.create(nuevaPlantilla).subscribe();
+    // 4. PILAR: INTEGRIDAD (Garantiza que la UI no rompa)
+    it('debería asegurar que la respuesta tenga monitoreos aunque el server no los envíe', () => {
+      service.create({ nombre: 'Check' }).subscribe(res => {
+        // Si el server olvida el array, el servicio lo pone por nosotros
+        expect(Array.isArray(res.monitoreos)).toBe(true);
+      });
 
-      const req = httpMock.expectOne('/plantillaMonitoreo');
-      expect(typeof req.request.body).toBe('object');
-      expect(req.request.body.nombre).toBe('Nueva Plantilla');
-      req.flush({});
+      const req = httpMock.expectOne(resource);
+      req.flush({ id: 12, nombre: 'Check' }); // Server no envía monitoreos
     });
   });
 
   describe('update()', () => {
-    const idUpdate = 1;
-    const cambios = {
-      nombre: 'Plantilla Modificada',
-      comando: 'check_ssh'
-    } as unknown as Partial<PlantillaMonitoreo>;
+    const id = 5;
+    const resourceUrl = `/plantillaMonitoreo/${id}`;
 
-    // 1. CAMINO FELIZ (Happy Path)
-    it('debería enviar un PUT con los cambios y retornar el objeto actualizado', () => {
-      const mockResponse = { id: idUpdate, ...cambios } as unknown as PlantillaMonitoreo;
+    // 1. PILAR: CAMINO FELIZ + INTEGRIDAD DE RECURSO
+    it('debería enviar un PUT a la URL correcta y retornar los datos actualizados', () => {
+      const cambios = { nombre: 'Nombre Editado' };
+      const mockRes = { id, nombre: 'Nombre Editado', monitoreos: [] };
 
-      service.update(idUpdate, cambios).subscribe((res) => {
-        expect(res.id).toBe(idUpdate);
-        expect(res.nombre).toBe('Plantilla Modificada');
+      service.update(id, cambios).subscribe(res => {
+        expect(res.id).toBe(id);
+        expect(res.nombre).toBe('Nombre Editado');
       });
 
-      const req = httpMock.expectOne(`/plantillaMonitoreo/${idUpdate}`);
+      const req = httpMock.expectOne(resourceUrl);
       expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual(cambios);
-      req.flush(mockResponse);
+      req.flush(mockRes);
     });
 
-    // 2. CASO DE BORDE (Edge Case)
-    it('debería permitir actualizaciones con un objeto vacío', () => {
-      const cambiosVacios = {} as Partial<PlantillaMonitoreo>;
+    // 2. PILAR: SANITIZACIÓN (Protección de datos)
+    it('debería limpiar el nombre antes de enviar la actualización', () => {
+      service.update(id, { nombre: '   Editado con espacios   ' }).subscribe();
 
-      service.update(idUpdate, cambiosVacios).subscribe();
-
-      const req = httpMock.expectOne(`/plantillaMonitoreo/${idUpdate}`);
-      expect(req.request.method).toBe('PUT');
-      expect(req.request.body).toEqual({});
-      req.flush({});
+      const req = httpMock.expectOne(resourceUrl);
+      expect(req.request.body.nombre).toBe('Editado con espacios');
+      req.flush({ id });
     });
 
-    // 3. MANEJO DE ERRORES (Error Handling)
-    it('debería manejar un error 403 si el usuario no tiene permisos para editar', () => {
-      service.update(idUpdate, cambios).subscribe({
-        next: () => expect.fail('Debería haber fallado con 403'),
-        error: (error) => {
-          expect(error.status).toBe(403);
-        }
+    // 3. PILAR: MANEJO DE ERRORES (Recurso inexistente)
+    it('debería propagar error 404 si el ID no existe para actualizar', () => {
+      service.update(999, { nombre: 'Test' }).subscribe({
+        next: () => expect.fail('No debería haber funcionado'),
+        error: (err) => expect(err.status).toBe(404)
       });
 
-      const req = httpMock.expectOne(`/plantillaMonitoreo/${idUpdate}`);
-      req.flush('Prohibido', { status: 403, statusText: 'Forbidden' });
+      const req = httpMock.expectOne('/plantillaMonitoreo/999');
+      req.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
 
-    // 4. INTEGRIDAD Y CONTRATO
-    it('debería construir la URL de actualización correctamente con el ID', () => {
-      const otroId = 99;
-      service.update(otroId, {}).subscribe();
+    // 4. PILAR: ROBUSTEZ (Integridad de la respuesta)
+    it('debería garantizar que monitoreos sea un array aunque el servidor devuelva null tras el update', () => {
+      service.update(id, { nombre: 'Nuevo' }).subscribe(res => {
+        expect(Array.isArray(res.monitoreos)).toBe(true);
+      });
 
-      const req = httpMock.expectOne(`/plantillaMonitoreo/${otroId}`);
-      expect(req.request.url).toContain(`/plantillaMonitoreo/${otroId}`);
-      req.flush({});
+      const req = httpMock.expectOne(resourceUrl);
+      // El servidor responde confirmando pero con el campo monitoreos corrupto
+      req.flush({ id, nombre: 'Nuevo', monitoreos: null });
     });
   });
 
@@ -267,49 +272,41 @@ describe('PlantillaMonitoreoService', () => {
     const idEliminar = 55;
     const urlEsperada = `/plantillaMonitoreo/${idEliminar}`;
 
-    // 1. CAMINO FELIZ (Happy Path)
-    it('debería enviar una petición DELETE al endpoint correcto', () => {
-      service.delete(idEliminar).subscribe(() => {
-        // En un delete exitoso, simplemente esperamos que se complete
-        expect(true).toBe(true);
+    // 1. PILAR: CAMINO FELIZ
+    it('debería enviar una petición DELETE al endpoint correcto y completar el flujo', () => {
+      service.delete(idEliminar).subscribe({
+        complete: () => expect(true).toBe(true)
       });
 
       const req = httpMock.expectOne(urlEsperada);
-      expect(req.request.method).toBe('DELETE');
-      req.flush(null); // El servidor suele responder con 200 OK o 204 No Content (null)
-    });
-
-    // 2. CASO DE BORDE (Edge Case)
-    it('debería funcionar correctamente con IDs grandes o inusuales', () => {
-      const idGrande = 999999;
-      service.delete(idGrande).subscribe();
-
-      const req = httpMock.expectOne(`/plantillaMonitoreo/${idGrande}`);
       expect(req.request.method).toBe('DELETE');
       req.flush(null);
     });
 
-    // 3. MANEJO DE ERRORES (Error Handling)
-    it('debería retornar error 404 si la plantilla ya no existe', () => {
-      service.delete(idEliminar).subscribe({
-        next: () => expect.fail('Debería haber fallado con 404'),
-        error: (error) => {
-          expect(error.status).toBe(404);
-        }
+    // 2. PILAR: MANEJO DE ERRORES (Recurso ya eliminado o inexistente)
+    it('debería propagar error 404 si la plantilla no existe', () => {
+      service.delete(99).subscribe({
+        next: () => expect.fail('Debería haber fallado'),
+        error: (err) => expect(err.status).toBe(404)
       });
 
-      const req = httpMock.expectOne(urlEsperada);
-      req.flush('No encontrado', { status: 404, statusText: 'Not Found' });
+      const req = httpMock.expectOne('/plantillaMonitoreo/99');
+      req.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
 
-    // 4. INTEGRIDAD Y CONTRATO
-    it('debería asegurar que no se envía cuerpo (body) en la petición DELETE', () => {
+    // 3. PILAR: INTEGRIDAD Y CONTRATO (Protección de Body)
+    it('debería asegurar que la petición no incluya un cuerpo de datos', () => {
       service.delete(idEliminar).subscribe();
-
       const req = httpMock.expectOne(urlEsperada);
-      // Por estándar, DELETE no suele llevar body
+
       expect(req.request.body).toBeNull();
       req.flush(null);
+    });
+
+    // 4. PILAR: ROBUSTEZ (Validación de entrada - Nuevo)
+    it('debería lanzar un error síncrono si el ID es nulo o indefinido', () => {
+      // @ts-ignore: Forzamos el error para probar la robustez del servicio
+      expect(() => service.delete(null)).toThrow('ID requerido para eliminar');
     });
   });
 

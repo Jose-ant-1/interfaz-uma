@@ -27,96 +27,161 @@ describe('authInterceptor', () => {
     httpMock.verify();
   });
 
-  describe('Gestión de URLs', () => {
-    // 1. CAMINO FELIZ: URL Relativa
-    it('debería añadir el prefijo de la API a las URLs relativas', () => {
+  describe('Integridad de URLs ', () => {
+
+    // 1. CAMINO FELIZ
+    it('debería transformar una ruta relativa estándar en una URL absoluta de la API', () => {
       httpClient.get('/usuarios').subscribe();
 
-      // Verificamos que la URL final combine el environment y el recurso
-      const req = httpMock.expectOne(req => req.url.startsWith(environment.apiUrl));
-      expect(req.request.url).toBe(`${environment.apiUrl}/usuarios`);
+      const req = httpMock.expectOne(`${environment.apiUrl}/usuarios`);
+      expect(req.request.url).toBe(`${environment.apiUrl}/usuarios`); //
       req.flush({});
     });
 
-    // 2. CASO DE BORDE: URL Absoluta
-    it('no debería modificar URLs que ya son absolutas (externas)', () => {
-      const urlExterna = 'https://google.com/api';
+    // 2. CASO DE BORDE: Sin slash inicial
+    it('debería normalizar la URL si el desarrollador olvida el slash inicial', () => {
+      httpClient.get('configuracion').subscribe();
+
+      // El pilar de robustez debe prevenir que se genere "api/configuracion" (sin el slash de separación)
+      const req = httpMock.expectOne(`${environment.apiUrl}/configuracion`);
+      expect(req.request.url).toBe(`${environment.apiUrl}/configuracion`); //
+      req.flush({});
+    });
+
+    // 3. CASO DE BORDE: URLs Externas
+    it('debería ignorar y no modificar URLs que ya apuntan a dominios externos (HTTP/HTTPS)', () => {
+      const urlExterna = 'https://assets.digitalocean.com/logo.png';
       httpClient.get(urlExterna).subscribe();
 
       const req = httpMock.expectOne(urlExterna);
-      expect(req.request.url).toBe(urlExterna);
+      expect(req.request.url).toBe(urlExterna); // Integridad: No añadir prefijos a lo que ya es absoluto
+      req.flush({});
+    });
+
+    // 4. INTEGRIDAD: URLs con parámetros
+    it('debería mantener intactos los parámetros de consulta al reconstruir la URL', () => {
+      const urlConParams = '/buscar?q=test&page=1';
+      httpClient.get(urlConParams).subscribe();
+
+      const req = httpMock.expectOne(r => r.url.includes('/buscar'));
+      expect(req.request.urlWithParams).toContain('q=test');
+      expect(req.request.urlWithParams).toContain('page=1'); //
       req.flush({});
     });
   });
 
-  describe('Gestión de Seguridad', () => {
-    // 3. INTEGRIDAD: Header de Autorización
-    it('debería incluir el header Authorization si existe authData en localStorage', () => {
-      const mockToken = 'Bearer token-123';
+  describe('Gestión de Seguridad e Integridad del Token', () => {
+
+    // 1. CAMINO FELIZ: Inyección de Token
+    it('debería adjuntar el encabezado Authorization cuando el token existe en localStorage', () => {
+      const mockToken = 'Bearer token-valido-123';
       localStorage.setItem('authData', mockToken);
 
-      httpClient.get('/test').subscribe();
+      httpClient.get('/api/test').subscribe();
 
-      const req = httpMock.expectOne(r => r.url.includes('/test'));
-      // Verificamos que el interceptor haya clonado y añadido el header
+      const req = httpMock.expectOne(r => r.url.includes('/api/test'));
+      // Verificamos Integridad del Header
       expect(req.request.headers.has('Authorization')).toBe(true);
       expect(req.request.headers.get('Authorization')).toBe(mockToken);
       req.flush({});
     });
 
-    // 4. MANEJO DE ESTADO: Sin Token
-    it('no debería añadir el header Authorization si no hay token', () => {
-      httpClient.get('/test').subscribe();
+    // 2. PILAR: SANITIZACIÓN (Protección de Envío)
+    it('debería limpiar espacios en blanco del token antes de inyectarlo en la cabecera', () => {
+      const tokenSucio = '   Bearer token-con-espacios   ';
+      localStorage.setItem('authData', tokenSucio);
 
-      const req = httpMock.expectOne(r => r.url.includes('/test'));
+      httpClient.get('/api/test').subscribe();
+
+      const req = httpMock.expectOne(r => r.url.includes('/api/test'));
+      // El pilar de sanitización debe haber actuado
+      expect(req.request.headers.get('Authorization')).toBe('Bearer token-con-espacios');
+      req.flush({});
+    });
+
+    // 3. CASO DE BORDE: Token Vacío o Nulo
+    it('NO debería añadir el encabezado Authorization si el localStorage está vacío', () => {
+      localStorage.removeItem('authData');
+
+      httpClient.get('/api/publico').subscribe();
+
+      const req = httpMock.expectOne(r => r.url.includes('/api/publico'));
+      // Protección de envío: No mandar cabeceras vacías o "null"
       expect(req.request.headers.has('Authorization')).toBe(false);
       req.flush({});
     });
+
+    // 4. INTEGRIDAD: Persistencia del Token
+    it('debería asegurar que el interceptor lee el valor más reciente de localStorage en cada petición', () => {
+      // Primera petición con Token A
+      localStorage.setItem('authData', 'Token-A');
+      httpClient.get('/api/1').subscribe();
+      httpMock.expectOne(r => r.url.includes('/api/1')).flush({});
+
+      // Cambio de estado
+      localStorage.setItem('authData', 'Token-B');
+      httpClient.get('/api/2').subscribe();
+
+      const req2 = httpMock.expectOne(r => r.url.includes('/api/2'));
+      expect(req2.request.headers.get('Authorization')).toBe('Token-B');
+      req2.flush({});
+    });
   });
 
-  describe('Casos de Borde y Errores adicionales', () => {
+  describe('Manejo de Errores e Integridad del Flujo', () => {
 
-    // CASO DE BORDE: Slash doble
-    it('debería manejar correctamente si la URL relativa no empieza con slash', () => {
-      httpClient.get('usuarios').subscribe(); // Sin slash inicial
-      const req = httpMock.expectOne(`${environment.apiUrl}/usuarios`);
-      expect(req.request.url).toBe(`${environment.apiUrl}/usuarios`);
-      req.flush({});
-    });
-
-    // INTEGRIDAD: Formato del Token
-    it('debería mantener el formato exacto del string de localStorage', () => {
-      const rawToken = 'Bearer token-completo';
-      localStorage.setItem('authData', rawToken);
-
-      httpClient.get('/test').subscribe();
-      const req = httpMock.expectOne(r => r.url.includes('/test'));
-
-      expect(req.request.headers.get('Authorization')).toBe(rawToken);
-      req.flush({});
-    });
-
-    // MANEJO DE ERRORES (Conceptuado)
-    it('debería dejar pasar los errores para que el servicio los maneje', async () => {
-      // 1. Definimos la petición (es un observable "frío", no se dispara hasta que alguien se suscriba)
-      const request$ = httpClient.get('/error');
-
-      // 2. Ejecutamos la suscripción (vía firstValueFrom)
+    // 1. RESILIENCIA: Error de Servidor (500)
+    it('debería propagar los errores 500 para que el servicio pueda gestionarlos', async () => {
+      const request$ = httpClient.get('/error-interno');
       const promise = firstValueFrom(request$);
 
-      // 3. Capturamos la petición pendiente que acaba de salir
-      const req = httpMock.expectOne(r => r.url.includes('/error'));
+      const req = httpMock.expectOne(r => r.url.includes('/error-interno'));
 
-      // 4. Simulamos la respuesta de error del servidor
-      req.flush('Error de servidor', {status: 500, statusText: 'Server Error'});
+      // Aquí defines el mensaje
+      req.flush('Error Grave', { status: 500, statusText: 'Internal Server Error' });
 
-      // 5. Verificamos que la promesa falló con el status correcto
       try {
         await promise;
       } catch (error: any) {
+        // PILAR: MANEJO DE ERRORES - Verificamos integridad del error propagado
         expect(error.status).toBe(500);
-        expect(error.statusText).toBe('Server Error');
+        // AJUSTE: El texto debe ser el mismo que definiste arriba
+        expect(error.statusText).toBe('Internal Server Error');
       }
+    });
+
+    // 2. CASO DE BORDE: Error de Autenticación (401)
+    it('debería permitir que el error 401 fluya (necesario para redirección a login)', async () => {
+      const request$ = httpClient.get('/privado');
+      const promise = firstValueFrom(request$);
+
+      const req = httpMock.expectOne(r => r.url.includes('/privado'));
+
+      // Simulamos token expirado
+      req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
+
+      try {
+        await promise;
+      } catch (error: any) {
+        expect(error.status).toBe(401); // El sistema de Auth capturará esto después
+      }
+    });
+
+    // 3. INTEGRIDAD: Peticiones múltiples
+    it('debería manejar múltiples peticiones concurrentes manteniendo la integridad de cada una', () => {
+      localStorage.setItem('authData', 'Bearer token-unificado');
+
+      httpClient.get('/api/1').subscribe();
+      httpClient.get('/api/2').subscribe();
+
+      const req1 = httpMock.expectOne(r => r.url.includes('/api/1'));
+      const req2 = httpMock.expectOne(r => r.url.includes('/api/2'));
+
+      expect(req1.request.headers.get('Authorization')).toBe('Bearer token-unificado');
+      expect(req2.request.headers.get('Authorization')).toBe('Bearer token-unificado');
+
+      req1.flush({});
+      req2.flush({});
     });
   });
 

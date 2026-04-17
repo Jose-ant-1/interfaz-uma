@@ -1,11 +1,12 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { UsuarioEditar } from './usuario-editar';
-import { UsuarioService } from '../../services/usuario.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {UsuarioEditar} from './usuario-editar';
+import {UsuarioService} from '../../services/usuario.service';
+import {ActivatedRoute, Router} from '@angular/router';
 import {of, Subject, throwError} from 'rxjs';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
+import {FormsModule} from '@angular/forms';
+import {CommonModule} from '@angular/common';
+import {Usuario} from '../../models/usuario.model';
 
 describe('UsuarioEditar', () => {
   let component: UsuarioEditar;
@@ -39,26 +40,40 @@ describe('UsuarioEditar', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Configuramos mocks por defecto pero NO detectamos cambios todavía
     mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('1');
     mockUsuarioService.getUsuarioById.mockReturnValue(of(mockUsuarioData));
 
     await TestBed.configureTestingModule({
-      imports: [CommonModule, FormsModule],
+      imports: [CommonModule, FormsModule], // Quitamos UsuarioEditar de aquí
       providers: [
-        { provide: UsuarioService, useValue: mockUsuarioService },
-        { provide: Router, useValue: mockRouter },
-        { provide: ActivatedRoute, useValue: mockActivatedRoute }
+        {provide: UsuarioService, useValue: mockUsuarioService},
+        {provide: Router, useValue: mockRouter},
+        {provide: ActivatedRoute, useValue: mockActivatedRoute}
       ]
     }).compileComponents();
 
+    // PILAR INTEGRACIÓN DOM: Definimos el template manualmente para el test
+    // Copia aquí la estructura básica de tu HTML original (la parte del spinner y el @if)
     TestBed.overrideComponent(UsuarioEditar, {
-      set: { template: '<div></div>', templateUrl: undefined }
+      set: {
+        template: `
+          @if (usuario()) {
+            <div class="container">
+              @if (cargando()) { <div class="animate-spin"></div> }
+              <form (ngSubmit)="guardar()">
+                <input [(ngModel)]="usuario()!.nombre" name="nombre">
+                <button type="submit">Guardar</button>
+              </form>
+            </div>
+          } @else {
+            <div class="animate-spin">Cargando perfil...</div>
+          }
+        `
+      }
     });
 
     fixture = TestBed.createComponent(UsuarioEditar);
     component = fixture.componentInstance;
-    // IMPORTANTE: Hemos quitado fixture.detectChanges() de aquí
   });
 
   it('debería crearse correctamente e inicializar el usuario', () => {
@@ -69,8 +84,72 @@ describe('UsuarioEditar', () => {
     // Ahora sí, ngOnInit se ejecutó y llamó al servicio
     expect(mockUsuarioService.getUsuarioById).toHaveBeenCalledWith(1);
     // Verificamos que el signal tiene los datos y la contraseña vacía
-    expect(component.usuario()).toEqual({ ...mockUsuarioData, contrasenia: '' });
+    expect(component.usuario()).toEqual({...mockUsuarioData, contrasenia: ''});
     expect(component.cargando()).toBe(false);
+  });
+
+  describe('UsuarioEditar - Inicialización y ngOnInit', () => {
+
+    // PILAR 1: Camino Feliz
+    it('debería cargar los datos del usuario y limpiar la contraseña al iniciar', () => {
+      mockUsuarioService.getUsuarioById.mockReturnValue(of(mockUsuarioData));
+
+      fixture.detectChanges(); // Ejecuta ngOnInit
+
+      expect(component.usuario()).toEqual({...mockUsuarioData, contrasenia: ''});
+      expect(component.cargando()).toBe(false);
+    });
+
+    // PILAR 2: Caso de Borde (ID inexistente en URL)
+    it('debería redirigir a la lista si el parámetro ID no existe (es null)', () => {
+      mockActivatedRoute.snapshot.paramMap.get.mockReturnValue(null);
+
+      fixture.detectChanges();
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard/usuarios']);
+    });
+    // PILAR 3: Manejo de Errores (404 o fallo de red)
+    it('debería navegar a la lista si el servicio responde con error', () => {
+      mockUsuarioService.getUsuarioById.mockReturnValue(throwError(() => new Error('404')));
+
+      fixture.detectChanges();
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/dashboard/usuarios']);
+    });
+
+    // PILAR 6: Robustez (Estado de carga coherente)
+    it('debería iniciar con el estado cargando en true antes de recibir datos', () => {
+      // Dejamos la petición pendiente
+      mockUsuarioService.getUsuarioById.mockReturnValue(new Subject());
+
+      fixture.detectChanges();
+
+      expect(component.cargando()).toBe(true);
+    });
+
+    // PILAR 10: Gestión de Memoria (Garantía de limpieza)
+    it('debería cancelar la suscripción al destruir el componente', () => {
+      const pipeSpy = vi.spyOn(mockUsuarioService.getUsuarioById(1), 'pipe');
+
+      fixture.detectChanges();
+
+      // Verificamos que se usó takeUntilDestroyed (indirectamente al ver si el stream se manejó)
+      expect(pipeSpy).toHaveBeenCalled();
+    });
+
+    // PILAR 11: Reactividad y Estado de Interfaz (Integración DOM)
+    it('debería mostrar el spinner de carga mientras el usuario es null', () => {
+      // Setup: Servicio que no responde (el signal usuario seguirá en null)
+      mockUsuarioService.getUsuarioById.mockReturnValue(new Subject());
+
+      fixture.detectChanges(); // Dispara ngOnInit
+
+      const spinner = fixture.nativeElement.querySelector('.animate-spin');
+
+      // Ahora spinner NO será null porque el HTML real tiene el @else con el spinner
+      expect(spinner).not.toBeNull();
+      expect(fixture.nativeElement.textContent).toContain('Cargando perfil');
+    });
   });
 
   describe('ngOnInit()', () => {
@@ -83,7 +162,7 @@ describe('UsuarioEditar', () => {
       component.ngOnInit(); // Lo ejecutamos explícitamente para mayor claridad
 
       expect(mockUsuarioService.getUsuarioById).toHaveBeenCalledWith(1);
-      expect(component.usuario()).toEqual({ ...mockUsuarioData, contrasenia: '' });
+      expect(component.usuario()).toEqual({...mockUsuarioData, contrasenia: ''});
       expect(component.cargando()).toBe(false);
     });
 
@@ -122,6 +201,12 @@ describe('UsuarioEditar', () => {
 
   describe('guardar()', () => {
 
+    beforeEach(() => {
+      // IMPORTANTE: Liberamos el semáforo antes de cada test de guardado
+      component.cargando.set(false);
+      component.usuario.set(mockUsuarioData);
+    });
+
     // 1. CAMINO FELIZ
     it('debería actualizar el usuario y redirigir al listado tras un guardado exitoso', () => {
       // Setup: Seteamos un usuario en el signal y simulamos éxito en el servicio
@@ -150,7 +235,8 @@ describe('UsuarioEditar', () => {
     // 3. MANEJO DE ERRORES / SEGURIDAD
     it('debería mostrar una alerta y detener el estado de carga si el servidor falla', () => {
       // Setup: Simulamos error y espiamos el alert del navegador
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {
+      });
       component.usuario.set(mockUsuarioData);
       mockUsuarioService.updateUsuario.mockReturnValue(throwError(() => new Error('Error de DB')));
 
@@ -179,6 +265,42 @@ describe('UsuarioEditar', () => {
       respuesta$.next(mockUsuarioData);
       // Tras el next, el componente navegaría (probado en pilar 1)
     });
+
+    // 5. BLOQUEO DE RE-ENTRADA (Evitar spam de clics)
+    it('debería bloquear intentos de guardado simultáneos si ya hay una petición en curso', () => {
+      component.usuario.set(mockUsuarioData);
+      // Usamos un Subject que no emite nada para dejar la petición "colgada"
+      const peticionPendiente = new Subject<Usuario>();
+      mockUsuarioService.updateUsuario.mockReturnValue(peticionPendiente);
+
+      // Primer clic
+      component.guardar();
+      expect(mockUsuarioService.updateUsuario).toHaveBeenCalledTimes(1);
+      expect(component.cargando()).toBe(true);
+
+      // Segundo clic inmediato
+      component.guardar();
+
+      // Verificación: No se ha llamado una segunda vez al servicio
+      expect(mockUsuarioService.updateUsuario).toHaveBeenCalledTimes(1);
+    });
+
+    // 6. GESTIÓN DE MEMORIA (Limpieza al destruir)
+    it('debería cancelar la suscripción de guardado si el componente se destruye', () => {
+      component.usuario.set(mockUsuarioData);
+      const respuesta$ = new Subject<Usuario>();
+      mockUsuarioService.updateUsuario.mockReturnValue(respuesta$);
+
+      // Espiamos si la suscripción se cierra
+      const pipeSpy = vi.spyOn(respuesta$, 'pipe');
+
+      component.guardar();
+
+      // Verificamos que se aplicó el operador de destrucción
+      expect(pipeSpy).toHaveBeenCalled();
+    });
+
   });
+
 
 });

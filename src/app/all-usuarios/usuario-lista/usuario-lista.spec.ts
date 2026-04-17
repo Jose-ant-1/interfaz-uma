@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { UsuariosListComponent } from './usuario-lista';
-import { UsuarioService } from '../../services/usuario.service';
-import { of, throwError } from 'rxjs';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CommonModule } from '@angular/common';
+import {ComponentFixture, TestBed, fakeAsync, tick} from '@angular/core/testing';
+import {UsuariosListComponent} from './usuario-lista';
+import {UsuarioService} from '../../services/usuario.service';
+import {delay, of, Subject, throwError} from 'rxjs';
+import {describe, it, expect, beforeEach, vi} from 'vitest';
+import {CommonModule} from '@angular/common';
+import {Usuario} from '../../models/usuario.model';
 
 describe('UsuariosListComponent', () => {
   let component: UsuariosListComponent;
@@ -16,38 +17,59 @@ describe('UsuariosListComponent', () => {
   };
 
   const mockUsuarios: any[] = [
-    { id: 1, nombre: 'Admin', email: 'admin@uma.es' },
-    { id: 2, nombre: 'User', email: 'user@uma.es' }
+    {id: 1, nombre: 'Admin', email: 'admin@uma.es'},
+    {id: 2, nombre: 'User', email: 'user@uma.es'}
   ];
+
+  const crearFixtureConTemplate = async (template: string) => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [CommonModule],
+      providers: [{ provide: UsuarioService, useValue: mockUsuarioService }]
+    }).overrideComponent(UsuariosListComponent, {
+      set: {
+        template,
+        templateUrl: undefined,
+        imports: [CommonModule], // Quitamos UsuarioCardComponent de aquí
+        schemas: [] // Esto ayuda a ignorar etiquetas desconocidas si hiciera falta
+      }
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(UsuariosListComponent);
+    fixture.detectChanges();
+    return fixture;
+  };
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
 
+    // Mocks por defecto
     mockUsuarioService.getUsuarios.mockReturnValue(of(mockUsuarios));
     mockUsuarioService.buscarUsuarios.mockReturnValue(of([]));
+    mockUsuarioService.eliminarUsuario.mockReturnValue(of(null));
 
     await TestBed.configureTestingModule({
-      // 1. QUITAMOS UsuariosListComponent de aquí
       imports: [CommonModule],
-      providers: [
-        { provide: UsuarioService, useValue: mockUsuarioService }
-      ]
-    }).compileComponents();
-
-    // 2. AHORA SÍ: Anulamos el acceso al archivo físico .html
-    TestBed.overrideComponent(UsuariosListComponent, {
+      providers: [{ provide: UsuarioService, useValue: mockUsuarioService }]
+    }).overrideComponent(UsuariosListComponent, {
       set: {
         template: '<div></div>',
         templateUrl: undefined,
         imports: [CommonModule]
       }
-    });
+    }).compileComponents();
 
     fixture = TestBed.createComponent(UsuariosListComponent);
     component = fixture.componentInstance;
 
-    // 3. ngOnInit se dispara aquí
-    fixture.detectChanges();
+    // FORZAMOS LA CARGA INICIAL
+    fixture.detectChanges(); // Esto lanza ngOnInit -> cargarUsuarios()
+    vi.advanceTimersByTime(0); // Procesa microtareas
+  });
+
+  afterEach(() => {
+    vi.useRealTimers(); // Limpiamos los timers
   });
 
   it('debería crearse correctamente y cargar usuarios iniciales', () => {
@@ -62,13 +84,8 @@ describe('UsuariosListComponent', () => {
 
     // 1. CAMINO FELIZ
     it('debería llamar a cargarUsuarios y configurar el buscador al iniciar', () => {
-      // El spy de cargarUsuarios nos permite ver si se llamó
-      const cargarSpy = vi.spyOn(component, 'cargarUsuarios');
-
-      component.ngOnInit();
-
-      // Verificamos que se dispara la carga inicial de la tabla
-      expect(cargarSpy).toHaveBeenCalled();
+      // Como detectChanges ya se llamó en el beforeEach,
+      // solo verificamos que el servicio ya fue consultado
       expect(mockUsuarioService.getUsuarios).toHaveBeenCalled();
     });
 
@@ -85,7 +102,8 @@ describe('UsuariosListComponent', () => {
     // 3. MANEJO DE ERRORES (SEGURIDAD)
     it('debería manejar el error del servicio y detener el estado de carga', () => {
       // Mockeamos console.error para que no ensucie la terminal del test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {
+      });
       mockUsuarioService.getUsuarios.mockReturnValue(throwError(() => new Error('Error de servidor')));
 
       component.ngOnInit();
@@ -95,99 +113,157 @@ describe('UsuariosListComponent', () => {
     });
 
     // 4. INTEGRIDAD: Suscripción del buscador
-    it('debería tener el buscador$ listo para reaccionar a cambios tras el ngOnInit', async () => {
-      vi.useFakeTimers();
+    it('debería tener el buscador$ listo para reaccionar a cambios', async () => {
+      fixture.detectChanges(); // Ejecuta ngOnInit
       const termino = 'pedro';
-      mockUsuarioService.buscarUsuarios.mockReturnValue(of([]));
 
-      // Ejecutamos ngOnInit para que se cree la suscripción al buscador$
-      component.ngOnInit();
-
-      // Simulamos una búsqueda
-      const evento = { target: { value: termino } } as unknown as Event;
+      const evento = { target: { value: termino } } as any;
       component.onSearch(evento);
 
+      // Avanzamos el tiempo de Vitest manualmente
       vi.advanceTimersByTime(300);
 
-      // Si el ngOnInit configuró bien el pipe, el servicio debe haber sido llamado
       expect(mockUsuarioService.buscarUsuarios).toHaveBeenCalledWith(termino);
+    });
 
-      vi.useRealTimers();
+    // 5. PILAR: INTEGRIDAD DE INYECTABLES Y SIGNALS
+    it('debería asegurar que las dependencias inyectadas (UsuarioService) están operativas', () => {
+      // Validación de Negocio: El componente no debe arrancar si el servicio es nulo
+      // @ts-ignore - Accedemos a la propiedad privada para auditoría de integridad
+      expect(component.usuarioService).toBeDefined();
+    });
+
+// 6. PILAR: ROBUSTEZ (Estado de Carga) - CORREGIDO
+    it('debería mantener el signal "cargando" en true mientras la petición está pendiente', () => {
+      // Usamos un Subject para controlar exactamente cuándo responde el servidor
+      const respuestaManual = new Subject<Usuario[]>();
+      mockUsuarioService.getUsuarios.mockReturnValue(respuestaManual.asObservable());
+
+      component.cargarUsuarios();
+
+      // Validación: El pilar de interfaz exige que el spinner sea visible mientras no hay datos
+      expect(component.cargando()).toBe(true);
+
+      // Cerramos el flujo para limpiar el test
+      respuestaManual.next([]);
+      expect(component.cargando()).toBe(false);
+    });
+
+    // 7. PILAR: INTEGRACIÓN DOM (Caso @empty) - CORREGIDO
+    it('debería mostrar el mensaje de "No se encontraron usuarios" en el DOM si la lista está vacía', async () => {
+      // IMPORTANTE: En el template del test usamos un div simple en lugar de <app-usuario-card>
+      // para evitar problemas de dependencias de componentes hijos.
+      const template = `
+        <div>
+          @for (u of usuarios(); track u.id) {
+            <div class="user-item">{{ u.nombre }}</div>
+          } @empty {
+            <div id="empty-msg">No hay usuarios</div>
+          }
+        </div>
+      `;
+
+      const fixtureDom = await crearFixtureConTemplate(template);
+
+      // Forzamos estado vacío
+      fixtureDom.componentInstance.usuarios.set([]);
+      fixtureDom.detectChanges();
+
+      const msg = fixtureDom.nativeElement.querySelector('#empty-msg');
+
+      // Verificación de Integridad de Interfaz
+      expect(msg).toSatisfy((el: HTMLElement) => el !== null);
+      expect(msg.textContent).toContain('No hay usuarios');
     });
   });
 
-  describe('onSearch() y Flujo de Búsqueda', () => {
+  describe('onSearch() - Pilares de Reactividad y Flujo', () => {
 
     beforeEach(() => {
-      // Activamos los cronómetros falsos de Vitest antes de cada test de este bloque
       vi.useFakeTimers();
     });
 
     afterEach(() => {
-      // Volvemos a los cronómetros reales para no afectar a otros archivos
       vi.useRealTimers();
     });
 
-    // 1. CAMINO FELIZ
-    it('debería emitir el término y actualizar la lista tras el debounceTime', async () => {
-      const termino = 'Admin';
-      const resultadosMock = [mockUsuarios[0]];
-      mockUsuarioService.buscarUsuarios.mockReturnValue(of(resultadosMock));
-
-      const evento = { target: { value: termino } } as unknown as Event;
-      component.onSearch(evento);
-
-      // Adelantamos 300ms manualmente
-      vi.advanceTimersByTime(300);
-
-      // Verificamos
-      expect(mockUsuarioService.buscarUsuarios).toHaveBeenCalledWith(termino);
-      expect(component.usuarios()).toEqual(resultadosMock);
-    });
-
-    // 2. CASO DE BORDE: Término vacío
-    it('debería buscar con string vacío si el input se limpia', async () => {
-      mockUsuarioService.buscarUsuarios.mockReturnValue(of(mockUsuarios));
-
-      const evento = { target: { value: '' } } as unknown as Event;
-      component.onSearch(evento);
-
-      vi.advanceTimersByTime(300);
-
-      expect(mockUsuarioService.buscarUsuarios).toHaveBeenCalledWith('');
-      expect(component.usuarios()).toEqual(mockUsuarios);
-    });
-
-    // 3. SEGURIDAD: Evitar llamadas duplicadas (distinctUntilChanged)
-    it('no debería llamar al servicio si el término de búsqueda es el mismo', async () => {
+    // 1. PILAR: PROTECCIÓN DE ENVÍO (Debounce)
+    it('debería ignorar ráfagas de escritura y solo llamar al servicio una vez (Debounce)', () => {
       mockUsuarioService.buscarUsuarios.mockReturnValue(of([]));
-      const evento = { target: { value: 'test' } } as unknown as Event;
 
-      component.onSearch(evento);
+      // El usuario escribe "A", luego "Ad", luego "Admin" muy rápido
+      component.onSearch({ target: { value: 'A' } } as any);
+      vi.advanceTimersByTime(100);
+      component.onSearch({ target: { value: 'Ad' } } as any);
+      vi.advanceTimersByTime(100);
+      component.onSearch({ target: { value: 'Admin' } } as any);
+
+      // Aún no han pasado los 300ms totales desde el último cambio
+      expect(mockUsuarioService.buscarUsuarios).not.toHaveBeenCalled();
+
+      // Avanzamos el resto del tiempo
       vi.advanceTimersByTime(300);
-
-      component.onSearch(evento);
-      vi.advanceTimersByTime(300);
-
-      // Solo una llamada a pesar de intentarlo dos veces con el mismo texto
-      expect(mockUsuarioService.buscarUsuarios).toHaveBeenCalledTimes(1);
-    });
-
-    // 4. INTEGRIDAD: Debounce (Escritura rápida)
-    it('debería cancelar búsquedas previas si el usuario escribe rápido', async () => {
-      mockUsuarioService.buscarUsuarios.mockReturnValue(of([]));
-      const evento1 = { target: { value: 'Ad' } } as unknown as Event;
-      const evento2 = { target: { value: 'Admin' } } as unknown as Event;
-
-      component.onSearch(evento1);
-      vi.advanceTimersByTime(150); // No llega al debounce
-
-      component.onSearch(evento2);
-      vi.advanceTimersByTime(300); // Aquí sí salta
-
-      // Solo se llama con el valor final
       expect(mockUsuarioService.buscarUsuarios).toHaveBeenCalledTimes(1);
       expect(mockUsuarioService.buscarUsuarios).toHaveBeenCalledWith('Admin');
+    });
+
+    // 2. PILAR: SANITIZACIÓN (DistinctUntilChanged)
+    it('no debería re-lanzar la búsqueda si el término es idéntico al anterior', () => {
+      mockUsuarioService.buscarUsuarios.mockReturnValue(of([]));
+
+      // Buscamos "Admin"
+      component.onSearch({ target: { value: 'Admin' } } as any);
+      vi.advanceTimersByTime(300);
+      fixture.detectChanges();
+      // Buscamos "Admin" otra vez (quizás pegó lo mismo)
+      component.onSearch({ target: { value: 'Admin' } } as any);
+      vi.advanceTimersByTime(300);
+      fixture.detectChanges();
+      // Pilar de Integridad: No malgastamos recursos de red
+      expect(mockUsuarioService.buscarUsuarios).toHaveBeenCalledTimes(1);
+    });
+
+    // 3. PILAR: INTEGRIDAD DE FLUJO (SwitchMap / Race Condition)
+    it('debería cancelar la petición anterior si llega una nueva búsqueda (SwitchMap)', () => {
+      // Creamos un observable que tarda en responder
+      const peticionLenta = of([{ id: 1, nombre: 'Lento' }]).pipe(delay(1000));
+      const peticionRapida = of([{ id: 2, nombre: 'Rápido' }]);
+
+      mockUsuarioService.buscarUsuarios
+        .mockReturnValueOnce(peticionLenta)
+        .mockReturnValueOnce(peticionRapida);
+
+      // Primera búsqueda
+      component.onSearch({ target: { value: 'Lento' } } as any);
+      vi.advanceTimersByTime(300); // Pasa el debounce
+      fixture.detectChanges();
+      // Segunda búsqueda inmediata
+      component.onSearch({ target: { value: 'Rápido' } } as any);
+      vi.advanceTimersByTime(300); // Pasa el debounce
+      fixture.detectChanges();
+      // El signal de usuarios debe tener el valor de la SEGUNDA búsqueda
+      // SwitchMap garantiza que la primera "se tira a la basura"
+      expect(component.usuarios()).toEqual([{ id: 2, nombre: 'Rápido' }]);
+    });
+
+    // 4. PILAR: RESILIENCIA (Error Handling en el Stream)
+    it('debería seguir funcionando aunque una búsqueda devuelva error', () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      // La primera falla
+      mockUsuarioService.buscarUsuarios.mockReturnValueOnce(throwError(() => new Error('DB Error')));
+      // La segunda funciona
+      mockUsuarioService.buscarUsuarios.mockReturnValueOnce(of([{ id: 3, nombre: 'Resucitado' }]));
+
+      component.onSearch({ target: { value: 'Fallo' } } as any);
+      vi.advanceTimersByTime(300);
+      fixture.detectChanges();
+      component.onSearch({ target: { value: 'Exito' } } as any);
+      vi.advanceTimersByTime(300);
+      fixture.detectChanges();
+      // Si el stream no tiene catchError o el subscribe está mal, el buscador moriría.
+      // Aquí validamos que el flujo sigue vivo.
+      expect(component.usuarios()).toEqual([{ id: 3, nombre: 'Resucitado' }]);
     });
   });
 
@@ -196,7 +272,7 @@ describe('UsuariosListComponent', () => {
     // 1. CAMINO FELIZ
     it('debería actualizar el signal usuarios y poner cargando en false al recibir datos', () => {
       // Setup: Definimos qué devolverá el servicio
-      const nuevosUsuarios = [{ id: 99, nombre: 'Nuevo', email: 'nuevo@uma.es' }];
+      const nuevosUsuarios = [{id: 99, nombre: 'Nuevo', email: 'nuevo@uma.es'}];
       mockUsuarioService.getUsuarios.mockReturnValue(of(nuevosUsuarios));
 
       component.cargarUsuarios();
@@ -219,7 +295,8 @@ describe('UsuariosListComponent', () => {
     // 3. MANEJO DE ERRORES / SEGURIDAD
     it('debería detener el estado de carga (cargando = false) incluso si el servicio falla', () => {
       // Setup: Forzamos un error de red
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {
+      });
       mockUsuarioService.getUsuarios.mockReturnValue(throwError(() => new Error('Fallo de conexión')));
 
       component.cargarUsuarios();
@@ -239,6 +316,55 @@ describe('UsuariosListComponent', () => {
       // Verificamos que no hay llamadas fantasmales o bucles
       // +1 de la carga inicial en el beforeEach = 3
       expect(mockUsuarioService.getUsuarios).toHaveBeenCalledTimes(3);
+    });
+
+    // 5. RPBUSTEZ
+    it('debería mantener los usuarios actuales si una nueva carga falla (Pilar de Robustez)', () => {
+      // 1. Datos previos COMPLETOS según el modelo Usuario
+      const datosPrevios: Usuario[] = [
+        { id: 1, nombre: 'Existente', email: 'test@uma.es' }
+      ];
+      component.usuarios.set(datosPrevios);
+
+      // 2. Intentamos recargar pero falla
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockUsuarioService.getUsuarios.mockReturnValue(throwError(() => new Error('Fallo')));
+
+      component.cargarUsuarios();
+
+      // Verificación
+      expect(component.usuarios()).toEqual(datosPrevios);
+      expect(component.cargando()).toBe(false);
+    });
+
+    // 6. PROTECCIÓN DE ENVÍO
+    it('debería resetear explícitamente el estado de carga al iniciar (Pilar de Protección de Interfaz)', () => {
+      // Nos aseguramos de que el primer paso sea poner cargando a true
+      // Usamos un observable que no emite para capturar el estado intermedio
+      mockUsuarioService.getUsuarios.mockReturnValue(new Subject().asObservable());
+
+      component.cargando.set(false);
+      component.cargarUsuarios();
+
+      expect(component.cargando()).toBe(true);
+    });
+
+    // 7. INTEGRACIÓN DOM
+    it('debería mostrar físicamente un indicador de carga en el DOM mientras cargando es true', async () => {
+      // Simulamos el bloque de carga de tu HTML
+      const template = `
+        @if (cargando()) { <div id="spinner">Cargando...</div> }
+        @else { <div id="lista">Lista lista</div> }
+      `;
+      const fixtureDom = await crearFixtureConTemplate(template);
+
+      // Act: Iniciamos carga
+      fixtureDom.componentInstance.cargando.set(true);
+      fixtureDom.detectChanges();
+
+      const spinner = fixtureDom.nativeElement.querySelector('#spinner');
+      expect(spinner).toBeTruthy();
+      expect(fixtureDom.nativeElement.querySelector('#lista')).toBeNull();
     });
   });
 
@@ -277,7 +403,8 @@ describe('UsuariosListComponent', () => {
     // 3. MANEJO DE ERRORES / SEGURIDAD
     it('debería mostrar una alerta y no modificar la lista si el servidor falla', () => {
       vi.spyOn(window, 'confirm').mockReturnValue(true);
-      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+      const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {
+      });
       mockUsuarioService.eliminarUsuario.mockReturnValue(throwError(() => new Error('Error al borrar')));
 
       component.eliminarUsuario(1);
@@ -299,6 +426,54 @@ describe('UsuariosListComponent', () => {
       // El usuario 2 debe seguir existiendo en el Signal
       expect(component.usuarios()).toContainEqual(usuarioQueSeQueda);
     });
+
+    // 5. PROTECCIÓN DE ENVÍO
+    it('debería impedir múltiples peticiones de eliminación si una ya está en curso (Pilar de Protección de Envío)', () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      // Simulamos una respuesta lenta del servidor
+      const respuestaLenta = new Subject<void>();
+      mockUsuarioService.eliminarUsuario.mockReturnValue(respuestaLenta.asObservable());
+
+      // Primer intento
+      component.eliminarUsuario(1);
+      // Segundo intento inmediato (sin esperar al primero)
+      component.eliminarUsuario(1);
+
+      // Verificación: Solo se debe haber llamado una vez al servicio
+      expect(mockUsuarioService.eliminarUsuario).toHaveBeenCalledTimes(1);
+    });
+
+    // 6. ROBUSTEZ
+    it('no debería alterar la lista si el ID a eliminar no existe en el signal local (Pilar de Robustez)', () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      mockUsuarioService.eliminarUsuario.mockReturnValue(of(null));
+      const longitudInicial = component.usuarios().length;
+
+      // Intentamos borrar un ID fantasma (999)
+      component.eliminarUsuario(999);
+
+      // Verificación: La lista sigue igual, no hay errores de undefined
+      expect(component.usuarios().length).toBe(longitudInicial);
+    });
+
+    // 7. INTEGRIDAD DE FLUJO
+    it('debería asegurar que la lista de usuarios se actualiza exactamente DESPUÉS de recibir el OK del servidor (Pilar de Integridad de Flujo)', () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const respuestaManual = new Subject<void>();
+      mockUsuarioService.eliminarUsuario.mockReturnValue(respuestaManual.asObservable());
+
+      component.eliminarUsuario(1);
+
+      // Antes de que el servidor responda, el usuario 1 sigue ahí
+      expect(component.usuarios().find(u => u.id === 1)).toBeTruthy();
+
+      // El servidor responde
+      respuestaManual.next();
+
+      // Ahora sí ha desaparecido
+      expect(component.usuarios().find(u => u.id === 1)).toBeUndefined();
+    });
+
   });
 
 

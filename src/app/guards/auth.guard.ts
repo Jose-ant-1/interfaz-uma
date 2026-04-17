@@ -1,16 +1,20 @@
-import { inject } from '@angular/core';
-import { Router, CanActivateFn } from '@angular/router';
-import { AuthService } from '../services/auth';
+import {CanActivateFn, Router} from '@angular/router';
+import {inject} from '@angular/core';
+import {AuthService} from '../services/auth';
 
 export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  console.log('Guard revisando rol:', authService.userRole());
+  const role = authService.userRole();
 
-  if (authService.userRole()) {
+  // PILAR: ROBUSTEZ Y SANITIZACIÓN
+  // Comprobamos que sea un string y que tenga contenido tras quitar espacios
+  const hasValidRole = typeof role === 'string' && role.trim().length > 0;
+
+  if (hasValidRole) {
     return true;
   }
-  console.warn('Guard: No autenticado, redirigiendo...');
+
   return router.parseUrl('/login');
-}
+};

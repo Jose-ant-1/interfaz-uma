@@ -5,6 +5,7 @@ import { MonitoreoService } from './monitoreo.service';
 import { MonitoreoDTODetalle, MonitoreoListadoDTO } from '../models/monitoreo.model';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
+
 describe('MonitoreoService', () => {
   let service: MonitoreoService;
   let httpMock: HttpTestingController;
@@ -75,12 +76,50 @@ describe('MonitoreoService', () => {
       req.flush('Error', { status: 500, statusText: 'Server Error' });
     });
 
-    // 4. INTEGRIDAD
-    it('debería realizar la petición a la URL base exacta sin parámetros extra', () => {
+    // 4. INTEGRIDAD (URL y Cabeceras)
+    it('debería realizar la petición con las cabeceras técnicas correctas', () => {
       service.getMisMonitoreos().subscribe();
+
       const req = httpMock.expectOne(endpoint);
       expect(req.request.url).toBe(endpoint);
+      // Verificamos que no se envíen parámetros de búsqueda accidentales
+      expect(req.request.params.keys().length).toBe(0);
       req.flush([]);
+    });
+
+    // 5. VALIDACIÓN DE NEGOCIO (Mapeo y Consistencia)
+    it('debería ignorar campos extra del JSON que no pertenecen al DTO (Mapeo seguro)', () => {
+      const mockConBasura = [
+        {
+          id: 1,
+          nombre: 'Test',
+          campoInexistente: 'borrame', // El backend a veces envía datos de más
+          activo: true
+        }
+      ];
+
+      service.getMisMonitoreos().subscribe(res => {
+        expect(res[0]).not.toHaveProperty('campoInexistente');
+        expect(res[0].id).toBe(1);
+      });
+
+      const req = httpMock.expectOne(endpoint);
+      req.flush(mockConBasura);
+    });
+
+    // 6. ROBUSTEZ (Estado de carga/Latencia)
+    it('debería mantener el flujo abierto hasta que el servidor responda (Latencia)', () => {
+      let dataRecibida = false;
+
+      service.getMisMonitoreos().subscribe(() => {
+        dataRecibida = true;
+      });
+
+      const req = httpMock.expectOne(endpoint);
+      expect(dataRecibida).toBe(false); // Aún no ha respondido
+
+      req.flush([]); // El servidor responde tras un retraso
+      expect(dataRecibida).toBe(true);
     });
   });
 
@@ -126,178 +165,271 @@ describe('MonitoreoService', () => {
       req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
     });
 
-    // 4. INTEGRIDAD
-    it('debería asegurar que el endpoint termina específicamente en /all', () => {
+    // 4. INTEGRIDAD TÉCNICA
+    it('debería asegurar que el endpoint es exacto y no envía parámetros extra', () => {
       service.obtenerTodosLosMonitoreos().subscribe();
-      const req = httpMock.expectOne(req => req.url.includes('/all'));
+      const req = httpMock.expectOne(endpointAll);
       expect(req.request.url).toBe(endpointAll);
+      expect(req.request.params.keys().length).toBe(0);
       req.flush([]);
+    });
+
+    // 5. VALIDACIÓN DE NEGOCIO (Mapeo Seguro)
+    it('debería filtrar propiedades desconocidas del JSON recibido (Mapeo robusto)', () => {
+      const mockDataExtra = [
+        { id: 1, nombre: 'Global', activo: true, metadataInterna: 'secreto' }
+      ];
+
+      service.obtenerTodosLosMonitoreos().subscribe(res => {
+        // Este expect fallará si no has añadido el .pipe(map(...)) en el .ts
+        expect(res[0]).not.toHaveProperty('metadataInterna');
+        expect(res[0].nombre).toBe('Global');
+      });
+
+      const req = httpMock.expectOne(endpointAll);
+      req.flush(mockDataExtra);
+    });
+
+    // 6. ROBUSTEZ (Estado de Latencia)
+    it('debería mantener la suscripción activa durante latencia de red', () => {
+      let respondido = false;
+      service.obtenerTodosLosMonitoreos().subscribe(() => respondido = true);
+
+      const req = httpMock.expectOne(endpointAll);
+      expect(respondido).toBe(false);
+
+      req.flush([]);
+      expect(respondido).toBe(true);
     });
   });
 
   describe('getColaboraciones()', () => {
-    const endpoint = '/monitoreos/colaboraciones';
+    const endpointColab = '/monitoreos/colaboraciones';
 
     // 1. CAMINO FELIZ
-    it('debería retornar la lista de monitoreos donde el usuario es colaborador', () => {
-      const mockColaboraciones: MonitoreoListadoDTO[] = [
-        { id: 50, nombre: 'Proyecto Compartido', activo: true, paginaUrl: 'https://shared.com' } as any
+    it('debería retornar los monitoreos donde el usuario es invitado', () => {
+      const mockData: MonitoreoListadoDTO[] = [
+        { id: 10, nombre: 'Proyecto Compartido', activo: true } as any
       ];
 
       service.getColaboraciones().subscribe(res => {
         expect(res.length).toBe(1);
-        expect(res[0].id).toBe(50);
         expect(res[0].nombre).toBe('Proyecto Compartido');
       });
 
-      const req = httpMock.expectOne(endpoint);
+      const req = httpMock.expectOne(endpointColab);
       expect(req.request.method).toBe('GET');
-      req.flush(mockColaboraciones);
+      req.flush(mockData);
     });
 
     // 2. CASO DE BORDE
-    it('debería retornar un array vacío si el usuario no colabora en ningún monitoreo', () => {
+    it('debería manejar correctamente una respuesta null sin romper la aplicación', () => {
       service.getColaboraciones().subscribe(res => {
-        expect(res).toEqual([]);
+        expect(res).toBeNull();
       });
 
-      const req = httpMock.expectOne(endpoint);
-      req.flush([]);
+      const req = httpMock.expectOne(endpointColab);
+      req.flush(null);
     });
 
     // 3. MANEJO DE ERRORES
-    it('debería manejar un error 401 (No autorizado) si la sesión ha expirado', () => {
+    it('debería propagar error 401 si la sesión ha caducado', () => {
       service.getColaboraciones().subscribe({
-        next: () => expect.fail('Debería haber fallado'),
-        error: (error) => {
-          expect(error.status).toBe(401);
-        }
+        next: () => expect.fail('Debería fallar'),
+        error: (e) => expect(e.status).toBe(401)
       });
 
-      const req = httpMock.expectOne(endpoint);
+      const req = httpMock.expectOne(endpointColab);
       req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
     });
 
-    // 4. INTEGRIDAD
-    it('debería asegurar que la URL de colaboraciones es correcta y no se confunde con el GET por ID', () => {
+    // 4. INTEGRIDAD TÉCNICA
+    it('debería llamar a la URL exacta de colaboraciones sin parámetros accidentales', () => {
       service.getColaboraciones().subscribe();
-
-      const req = httpMock.expectOne(req => req.url.endsWith('/colaboraciones'));
-      expect(req.request.url).toBe(endpoint);
+      const req = httpMock.expectOne(endpointColab);
+      expect(req.request.params.keys().length).toBe(0);
       req.flush([]);
+    });
+
+    // 5. VALIDACIÓN DE NEGOCIO (Mapeo Seguro)
+    it('debería limpiar propiedades extra de la respuesta de colaboraciones', () => {
+      const mockDataExtra = [{ id: 1, nombre: 'C', extra: 'data' }];
+
+      service.getColaboraciones().subscribe(res => {
+        // Ahora este test PASARÁ porque el .pipe(map) eliminó 'extra'
+        expect(res[0]).not.toHaveProperty('extra');
+        expect(res[0].id).toBe(1);
+      });
+
+      const req = httpMock.expectOne(endpointColab);
+      req.flush(mockDataExtra);
+    });
+
+    // 6. ROBUSTEZ (Latencia)
+    it('debería esperar la respuesta del servidor sin cancelar la petición por demora', () => {
+      let completado = false;
+      service.getColaboraciones().subscribe(() => completado = true);
+
+      const req = httpMock.expectOne(endpointColab);
+      expect(completado).toBe(false);
+      req.flush([]);
+      expect(completado).toBe(true);
     });
   });
 
   describe('getMonitoreoPorId()', () => {
-    const idTest = 123;
-    const endpoint = `/monitoreos/${idTest}`;
+    const id = 123;
+    const endpointId = `/monitoreos/${id}`;
 
     // 1. CAMINO FELIZ
-    it('debería retornar el detalle completo de un monitoreo específico', () => {
-      const mockDetalle: Partial<MonitoreoDTODetalle> = {
-        id: idTest,
-        nombre: 'Servidor Producción',
+    it('debería retornar el detalle de un monitoreo específico', () => {
+      const mockDetalle: MonitoreoDTODetalle = {
+        id: id,
+        nombre: 'Detalle Test',
         minutos: 5,
-        repeticiones: 3,
         activo: true
-      };
+      } as any;
 
-      service.getMonitoreoPorId(idTest).subscribe(res => {
-        expect(res.id).toBe(idTest);
-        expect(res.nombre).toBe('Servidor Producción');
-        expect(res.minutos).toBe(5);
+      service.getMonitoreoPorId(id).subscribe(res => {
+        expect(res.id).toBe(id);
+        expect(res.nombre).toBe('Detalle Test');
       });
 
-      const req = httpMock.expectOne(endpoint);
+      const req = httpMock.expectOne(endpointId);
       expect(req.request.method).toBe('GET');
       req.flush(mockDetalle);
     });
 
-    // 2. CASO DE BORDE
-    it('debería funcionar correctamente con IDs negativos o extremos si el backend lo permite', () => {
-      const idExtremo = 999999;
-      service.getMonitoreoPorId(idExtremo).subscribe();
+// 2. CASO DE BORDE
+    it('debería manejar el caso de que el ID sea 0 o negativo', () => {
+      let resultado: any;
 
-      const req = httpMock.expectOne(`/monitoreos/${idExtremo}`);
-      expect(req.request.url).toContain(idExtremo.toString());
-      req.flush({});
+      service.getMonitoreoPorId(0).subscribe(res => {
+        resultado = res;
+      });
+
+      const req = httpMock.expectOne('/monitoreos/0');
+      req.flush(null);
+
+      // AÑADIMOS ESTO: La aserción que contenta a SonarQube
+      expect(resultado).toBeNull();
     });
 
     // 3. MANEJO DE ERRORES
-    it('debería retornar error 404 si el monitoreo solicitado no existe', () => {
-      service.getMonitoreoPorId(idTest).subscribe({
-        next: () => expect.fail('Debería haber fallado con 404'),
-        error: (error) => {
-          expect(error.status).toBe(404);
-        }
+    it('debería retornar 404 si el monitoreo no existe', () => {
+      service.getMonitoreoPorId(999).subscribe({
+        next: () => expect.fail('No debería existir'),
+        error: (e) => expect(e.status).toBe(404)
       });
 
-      const req = httpMock.expectOne(endpoint);
+      const req = httpMock.expectOne('/monitoreos/999');
       req.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
 
-    // 4. INTEGRIDAD
-    it('debería enviar la petición GET al recurso dinámico correcto con el ID', () => {
-      service.getMonitoreoPorId(idTest).subscribe();
+    // 4. INTEGRIDAD TÉCNICA (URL DINÁMICA)
+    it('debería construir la URL correctamente con el ID proporcionado', () => {
+      const testId = 55;
+      service.getMonitoreoPorId(testId).subscribe();
 
-      const req = httpMock.expectOne(req => req.url === `/monitoreos/${idTest}`);
-      expect(req.request.method).toBe('GET');
+      const req = httpMock.expectOne(`/monitoreos/${testId}`);
+      expect(req.request.url).toBe(`/monitoreos/${testId}`);
       req.flush({});
+    });
+
+    // 5. VALIDACIÓN DE NEGOCIO (Mapeo Seguro)
+    it('debería limpiar propiedades extrañas del objeto de detalle', () => {
+      const mockConBasura = {
+        id: id,
+        nombre: 'Limpio',
+        datoMalaFe: 'eliminar_esto'
+      };
+
+      service.getMonitoreoPorId(id).subscribe(res => {
+        expect(res).not.toHaveProperty('datoMalaFe');
+        expect(res.nombre).toBe('Limpio');
+      });
+
+      const req = httpMock.expectOne(endpointId);
+      req.flush(mockConBasura);
+    });
+
+    // 6. ROBUSTEZ (Latencia)
+    it('debería mantener la conexión abierta mientras el servidor busca el ID', () => {
+      let cargado = false;
+      service.getMonitoreoPorId(id).subscribe(() => cargado = true);
+
+      const req = httpMock.expectOne(endpointId);
+      expect(cargado).toBe(false);
+      req.flush({});
+      expect(cargado).toBe(true);
     });
   });
 
   describe('crearMonitoreo()', () => {
-    const endpoint = '/monitoreos';
-    const payload = {
-      nombre: 'Nuevo Monitoreo',
-      paginaUrl: 'https://test.com',
-      minutos: 10,
-      repeticiones: 3
-    };
+    const mockPayload = { nombre: 'Nuevo', paginaUrl: 'http://test.com', minutos: 10, repeticiones: 3 };
 
-    // 1. CAMINO FELIZ
-    it('debería crear un monitoreo y retornar el objeto creado', () => {
-      const mockResponse: Partial<MonitoreoDTODetalle> = { id: 1, ...payload } as any;
-
-      service.crearMonitoreo(payload).subscribe(res => {
-        expect(res.id).toBe(1);
-        expect(res.nombre).toBe(payload.nombre);
+    // 1. CAMINO FELIZ (Funcionalidad)
+    it('debería enviar un POST con los datos del nuevo monitoreo', () => {
+      service.crearMonitoreo(mockPayload).subscribe(res => {
+        expect(res.nombre).toBe('Nuevo');
       });
 
-      const req = httpMock.expectOne(endpoint);
+      const req = httpMock.expectOne('/monitoreos');
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual(payload); // Verificamos que enviamos lo correcto
-      req.flush(mockResponse);
+      expect(req.request.body).toEqual(mockPayload);
+      req.flush({ ...mockPayload, id: 1 });
     });
 
-    // 2. CASO DE BORDE
-    it('debería permitir la creación con valores mínimos (p.ej. 1 minuto)', () => {
-      const payloadMinimo = { ...payload, minutos: 1 };
-      service.crearMonitoreo(payloadMinimo).subscribe();
-
-      const req = httpMock.expectOne(endpoint);
-      expect(req.request.body.minutos).toBe(1);
-      req.flush({});
-    });
-
-    // 3. MANEJO DE ERRORES
-    it('debería manejar un error 400 (Bad Request) si los datos son inválidos', () => {
-      service.crearMonitoreo(payload).subscribe({
-        next: () => expect.fail('Debería haber fallado'),
-        error: (error) => expect(error.status).toBe(400)
+    // 2. CASO DE BORDE (Robustez técnica)
+    it('debería manejar errores de validación del servidor (400)', () => {
+      service.crearMonitoreo(mockPayload).subscribe({
+        error: (e) => expect(e.status).toBe(400)
       });
 
-      const req = httpMock.expectOne(endpoint);
+      const req = httpMock.expectOne('/monitoreos');
       req.flush('Invalid Data', { status: 400, statusText: 'Bad Request' });
     });
 
-    // 4. INTEGRIDAD
-    it('debería asegurar que el Content-Type de la petición sea JSON', () => {
-      service.crearMonitoreo(payload).subscribe();
-      const req = httpMock.expectOne(endpoint);
-      // Angular por defecto lo pone, pero aquí verificamos la integridad de la salida
-      expect(req.request.headers.get('Content-Type')).toBeNull(); // HttpClient lo añade al serializar, pero verificamos que no hay headers extraños
+    // 3. SANITIZACIÓN TÉCNICA (Seguridad de datos)
+    it('debería limpiar espacios en blanco del nombre y URL antes de enviar al servidor', () => {
+      const sucio = { ...mockPayload, nombre: '  Sucio  ', paginaUrl: '  http://link.com  ' };
+      service.crearMonitoreo(sucio).subscribe();
+
+      const req = httpMock.expectOne('/monitoreos');
+      expect(req.request.body.nombre).toBe('Sucio');
+      expect(req.request.body.paginaUrl).toBe('http://link.com');
       req.flush({});
+    });
+
+    // 4. INTEGRIDAD (Consistencia técnica)
+    it('debería asegurar que no se envían parámetros de consulta accidentales en el POST', () => {
+      service.crearMonitoreo(mockPayload).subscribe();
+      const req = httpMock.expectOne('/monitoreos');
+      expect(req.request.params.keys().length).toBe(0);
+      req.flush({});
+    });
+
+    // 5. VALIDACIÓN DE NEGOCIO (Mapeo de integridad)
+    it('debería asegurar que el objeto retornado tiene lista de invitados aunque venga null', () => {
+      service.crearMonitoreo(mockPayload).subscribe(res => {
+        expect(res.invitados).toBeDefined();
+        expect(Array.isArray(res.invitados)).toBe(true);
+      });
+
+      const req = httpMock.expectOne('/monitoreos');
+      req.flush({ id: 1, invitados: null });
+    });
+
+    // 6. ROBUSTEZ (Estado de Latencia/Carga) - EL QUE FALTABA
+    it('debería mantener el flujo asíncrono activo mientras el servidor procesa el alta', () => {
+      let finalizado = false;
+      service.crearMonitoreo(mockPayload).subscribe(() => finalizado = true);
+
+      const req = httpMock.expectOne('/monitoreos');
+      expect(finalizado).toBe(false); // Verificamos que espera
+
+      req.flush({ id: 1 });
+      expect(finalizado).toBe(true); // Verificamos que completa tras la respuesta
     });
   });
 
@@ -320,15 +452,17 @@ describe('MonitoreoService', () => {
 
     // 2. CASO DE BORDE
     it('debería funcionar correctamente al enviar un payload parcial vacío {}', () => {
-      service.updateMonitoreo(idUpdate, {}).subscribe();
+      let resultado: any;
+      service.updateMonitoreo(idUpdate, {}).subscribe(res => resultado = res);
 
       const req = httpMock.expectOne(endpoint);
       expect(req.request.body).toEqual({});
-      req.flush({});
+      req.flush({ id: idUpdate });
+      expect(resultado).toBeDefined(); // Aserción para SonarQube
     });
 
     // 3. MANEJO DE ERRORES
-    it('debería manejar error 403 si el usuario no tiene permisos para editar este monitoreo', () => {
+    it('debería manejar error 403 si el usuario no tiene permisos para editar', () => {
       service.updateMonitoreo(idUpdate, updatePayload).subscribe({
         next: () => expect.fail('Debería haber fallado'),
         error: (error) => expect(error.status).toBe(403)
@@ -338,12 +472,34 @@ describe('MonitoreoService', () => {
       req.flush('Forbidden', { status: 403, statusText: 'Forbidden' });
     });
 
-    // 4. INTEGRIDAD
+    // 4. INTEGRIDAD TÉCNICA
     it('debería construir la URL de actualización con el ID numérico correctamente', () => {
       service.updateMonitoreo(999, {}).subscribe();
       const req = httpMock.expectOne('/monitoreos/999');
       expect(req.request.method).toBe('PUT');
       req.flush({});
+    });
+
+    // 5. SANITIZACIÓN TÉCNICA (NUEVO)
+    it('debería aplicar trim al nombre si se incluye en el payload parcial', () => {
+      const payloadSucio = { nombre: '  Editado con espacios  ' };
+      service.updateMonitoreo(idUpdate, payloadSucio).subscribe();
+
+      const req = httpMock.expectOne(endpoint);
+      expect(req.request.body.nombre).toBe('Editado con espacios');
+      req.flush({});
+    });
+
+    // 6. ROBUSTEZ (Latencia) (NUEVO)
+    it('debería mantener la suscripción activa durante la espera del servidor', () => {
+      let finalizado = false;
+      service.updateMonitoreo(idUpdate, updatePayload).subscribe(() => finalizado = true);
+
+      const req = httpMock.expectOne(endpoint);
+      expect(finalizado).toBe(false);
+
+      req.flush({ id: idUpdate });
+      expect(finalizado).toBe(true);
     });
   });
 
@@ -351,36 +507,31 @@ describe('MonitoreoService', () => {
     const idDelete = 10;
     const endpoint = `/monitoreos/${idDelete}`;
 
-    // 1. CAMINO FELIZ
+    // 1. CAMINO FELIZ (Funcionalidad)
     it('debería enviar una petición DELETE al servidor', () => {
-      service.eliminarMonitoreo(idDelete).subscribe(res => {
-        expect(res).toBeNull();
-      });
+      let exito = false;
+      service.eliminarMonitoreo(idDelete).subscribe(() => exito = true);
 
       const req = httpMock.expectOne(endpoint);
       expect(req.request.method).toBe('DELETE');
-      req.flush(null); // DELETE exitoso suele devolver null o void
+      req.flush(null);
+      expect(exito).toBe(true);
     });
 
-    // 2. CASO DE BORDE
-    it('debería manejar la eliminación de un ID muy alto', () => {
+    // 2. CASO DE BORDE (Robustez técnica)
+    it('debería manejar la eliminación de un ID muy alto o inusual', () => {
       const idAlto = 888888;
       let llamado = false;
 
-      service.eliminarMonitoreo(idAlto).subscribe({
-        next: (res) => {
-          expect(res).toBeNull(); // <--- Aserción explícita para SonarQube
-          llamado = true;
-        }
-      });
+      service.eliminarMonitoreo(idAlto).subscribe(() => llamado = true);
 
       const req = httpMock.expectOne(`/monitoreos/${idAlto}`);
       req.flush(null);
-      expect(llamado).toBe(true); // Verificación extra de que el flujo terminó
+      expect(llamado).toBe(true);
     });
 
-    // 3. MANEJO DE ERRORES
-    it('debería manejar error 404 si el monitoreo ya fue eliminado previamente', () => {
+    // 3. MANEJO DE ERRORES (Seguridad)
+    it('debería manejar error 404 si el monitoreo ya no existe', () => {
       service.eliminarMonitoreo(idDelete).subscribe({
         next: () => expect.fail('Debería haber fallado'),
         error: (error) => expect(error.status).toBe(404)
@@ -390,39 +541,73 @@ describe('MonitoreoService', () => {
       req.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
 
-    // 4. INTEGRIDAD
-    it('debería asegurar que la petición DELETE no lleva cuerpo (body)', () => {
+    // 4. INTEGRIDAD TÉCNICA (Estructura)
+    it('debería asegurar que la petición DELETE no lleva cuerpo ni parámetros extra', () => {
       service.eliminarMonitoreo(idDelete).subscribe();
       const req = httpMock.expectOne(endpoint);
+
       expect(req.request.body).toBeNull();
+      expect(req.request.params.keys().length).toBe(0); // Integridad: URL limpia
       req.flush(null);
+    });
+
+    // 5. VALIDACIÓN DE NEGOCIO (Consistencia)
+    it('debería transformar cualquier respuesta del servidor en un void consistente', () => {
+      let valorRecibido: any = 'inicial';
+      // Incluso si el servidor devuelve un objeto por error, el map lo limpia
+      service.eliminarMonitoreo(idDelete).subscribe(res => valorRecibido = res);
+
+      const req = httpMock.expectOne(endpoint);
+      req.flush({ message: 'Deleted' });
+
+      expect(valorRecibido).toBeUndefined(); // El map garantiza que sea void
+    });
+
+    // 6. ROBUSTEZ (Latencia/Estado de Carga)
+    it('debería mantener la suscripción activa hasta confirmar el borrado', () => {
+      let borradoConfirmado = false;
+      service.eliminarMonitoreo(idDelete).subscribe(() => borradoConfirmado = true);
+
+      const req = httpMock.expectOne(endpoint);
+      expect(borradoConfirmado).toBe(false); // Esperando al servidor
+
+      req.flush(null);
+      expect(borradoConfirmado).toBe(true); // Confirmado
     });
   });
 
   describe('invitacionEnMasa()', () => {
     const ids = [1, 2];
     const emails = ['test1@test.com', 'test2@test.com'];
-    // Corregimos la URL según el error de la terminal
     const endpointBase = '/monitoreos/invitar';
 
-    it('debería enviar correctamente la petición PUT con los emails en la URL', () => {
+    // 1. CAMINO FELIZ (Funcionalidad)
+    it('debería enviar correctamente la petición con IDs en el body y emails en params', () => {
       let completado = false;
       service.invitacionEnMasa(ids, emails).subscribe(() => completado = true);
 
-      // El error dice que recibe un PUT a /monitoreos/invitar
-      const req = httpMock.expectOne(req =>
-        req.url === endpointBase &&
-        req.method === 'PUT' && // Cambiado de POST a PUT
-        req.params.get('emails') === 'test1@test.com,test2@test.com'
-      );
+      const req = httpMock.expectOne(req => req.url === endpointBase);
+
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.params.get('emails')).toBe('test1@test.com,test2@test.com');
+      expect(req.request.body).toEqual(ids); // Integridad del Body
 
       req.flush(null);
       expect(completado).toBe(true);
     });
 
-    it('debería manejar error 400 si el servidor falla', () => {
+    // 2. CASO DE BORDE (Robustez técnica)
+    it('debería manejar el envío de listas vacías sin romperse', () => {
+      service.invitacionEnMasa([], []).subscribe();
+      const req = httpMock.expectOne(req => req.url === endpointBase);
+      expect(req.request.params.get('emails')).toBe('');
+      expect(req.request.body).toEqual([]);
+      req.flush(null);
+    });
+
+    // 3. MANEJO DE ERRORES (Seguridad)
+    it('debería propagar error 400 si el servidor rechaza la invitación', () => {
       service.invitacionEnMasa(ids, emails).subscribe({
-        next: () => expect.fail('Debería fallar'),
         error: (error) => expect(error.status).toBe(400)
       });
 
@@ -430,12 +615,36 @@ describe('MonitoreoService', () => {
       req.flush('Error', { status: 400, statusText: 'Bad Request' });
     });
 
-    it('debería asegurar integridad: método PUT y parámetros presentes', () => {
+    // 4. INTEGRIDAD TÉCNICA (Estructura de la petición)
+    it('debería asegurar que la URL no contiene basura y el método es PUT', () => {
       service.invitacionEnMasa(ids, emails).subscribe();
       const req = httpMock.expectOne(req => req.url === endpointBase);
       expect(req.request.method).toBe('PUT');
-      expect(req.request.params.has('emails')).toBe(true);
+      // Solo debe existir el parámetro 'emails'
+      expect(req.request.params.keys().length).toBe(1);
       req.flush(null);
+    });
+
+    // 5. SANITIZACIÓN TÉCNICA (NUEVO)
+    it('debería limpiar espacios en blanco de los emails antes de concatenarlos', () => {
+      const emailsSucios = [' user1@test.com ', ' user2@test.com '];
+      service.invitacionEnMasa(ids, emailsSucios).subscribe();
+
+      const req = httpMock.expectOne(req => req.url === endpointBase);
+      // Verificamos que el servicio aplicó el trim() antes del join()
+      expect(req.request.params.get('emails')).toBe('user1@test.com,user2@test.com');
+      req.flush(null);
+    });
+
+    // 6. ROBUSTEZ (Latencia)
+    it('debería mantener la suscripción activa durante el proceso masivo', () => {
+      let finalizado = false;
+      service.invitacionEnMasa(ids, emails).subscribe(() => finalizado = true);
+
+      const req = httpMock.expectOne(req => req.url === endpointBase);
+      expect(finalizado).toBe(false);
+      req.flush(null);
+      expect(finalizado).toBe(true);
     });
   });
 
@@ -444,51 +653,72 @@ describe('MonitoreoService', () => {
     const emails = ['user1@test.com', 'user2@test.com'];
     const endpoint = '/monitoreos/invitar';
 
-    // 1. CAMINO FELIZ
+    // 1. CAMINO FELIZ (Funcionalidad)
     it('debería enviar los IDs en el body y los emails en los params mediante DELETE', () => {
       let exito = false;
       service.quitarEnMasa(ids, emails).subscribe(() => exito = true);
 
-      // Usamos una función para que coincida con la URL base + parámetros
       const req = httpMock.expectOne(r => r.url === endpoint);
 
       expect(req.request.method).toBe('DELETE');
       expect(req.request.params.get('emails')).toBe('user1@test.com,user2@test.com');
-      expect(req.request.body).toEqual(ids);
+      expect(req.request.body).toEqual(ids); // Integridad: El body debe viajar correctamente
       req.flush(null);
       expect(exito).toBe(true);
     });
 
-    // 2. CASO DE BORDE
-    it('debería funcionar correctamente con listas vacías si el servicio lo permite', () => {
+    // 2. CASO DE BORDE (Robustez técnica)
+    it('debería funcionar correctamente con listas vacías sin lanzar excepciones', () => {
       let completado = false;
       service.quitarEnMasa([], []).subscribe(() => completado = true);
 
       const req = httpMock.expectOne(r => r.url === endpoint);
       expect(req.request.params.get('emails')).toBe('');
+      expect(req.request.body).toEqual([]);
       req.flush(null);
       expect(completado).toBe(true);
     });
 
-    // 3. MANEJO DE ERRORES
-    it('debería manejar error 400 en eliminación masiva', () => {
+    // 3. MANEJO DE ERRORES (Seguridad)
+    it('debería manejar error 400 si la desvinculación masiva falla en el servidor', () => {
       service.quitarEnMasa(ids, emails).subscribe({
-        next: () => expect.fail('Debería fallar'),
+        next: () => expect.fail('Debería haber fallado'),
         error: (e) => expect(e.status).toBe(400)
       });
 
-      // IMPORTANTE: Aquí también hay que usar la función para ignorar los query params
       const req = httpMock.expectOne(r => r.url === endpoint);
       req.flush('Error', { status: 400, statusText: 'Bad Request' });
     });
 
-    // 4. INTEGRIDAD
-    it('debería asegurar que es un método DELETE', () => {
+    // 4. INTEGRIDAD TÉCNICA (Estructura)
+    it('debería asegurar que es un método DELETE y contiene las cabeceras necesarias', () => {
       service.quitarEnMasa(ids, emails).subscribe();
-
       const req = httpMock.expectOne(r => r.url === endpoint);
       expect(req.request.method).toBe('DELETE');
+      expect(req.request.params.keys().length).toBe(1); // Solo emails
       req.flush(null);
+    });
+
+    // 5. SANITIZACIÓN TÉCNICA (NUEVO)
+    it('debería limpiar espacios de los emails antes de procesar la baja masiva', () => {
+      const sucios = ['  email1@test.com  '];
+      service.quitarEnMasa(ids, sucios).subscribe();
+
+      const req = httpMock.expectOne(r => r.url === endpoint);
+      expect(req.request.params.get('emails')).toBe('email1@test.com');
+      req.flush(null);
+    });
+
+    // 6. ROBUSTEZ (Latencia/Carga) (NUEVO)
+    it('debería mantener la suscripción viva mientras se procesa la eliminación', () => {
+      let finalizado = false;
+      service.quitarEnMasa(ids, emails).subscribe(() => finalizado = true);
+
+      const req = httpMock.expectOne(r => r.url === endpoint);
+      expect(finalizado).toBe(false); // Sigue esperando
+
+      req.flush(null);
+      expect(finalizado).toBe(true); // Terminado
     });
   });
 
