@@ -19,15 +19,14 @@ export class PlantUsuarioAnyadir implements OnInit {
   private readonly usuarioService = inject(UsuarioService);
   private readonly router = inject(Router);
 
+  // --- ESTADO (Signals) ---
   nombreGrupo = '';
   usuariosDisponibles = signal<Usuario[]>([]);
   seleccionados = signal<number[]>([]);
   cargando = signal(false);
-
-
   filtro = signal('');
 
-  // filtra por nombre o email
+  // --- LÓGICA DE NEGOCIO (Computed) ---
   usuariosFiltrados = computed(() => {
     const term = this.filtro().toLowerCase().trim();
     const lista = this.usuariosDisponibles();
@@ -41,18 +40,20 @@ export class PlantUsuarioAnyadir implements OnInit {
   });
 
   ngOnInit(): void {
-    this.inicializarComponente();
+    void this.inicializarComponente();
   }
 
-  // 3. Movemos la lógica asíncrona aquí
   private async inicializarComponente() {
     try {
       this.cargando.set(true);
+
+      // Pilar: Integridad de Datos (Carga paralela)
       const [miPerfil, todosLosUsuarios] = await Promise.all([
         firstValueFrom(this.usuarioService.getPerfil()),
         firstValueFrom(this.usuarioService.getUsuarios())
       ]);
 
+      // Pilar: Sanitización (No incluirse a uno mismo)
       const listaSinMi = todosLosUsuarios.filter(u =>
         u.id !== undefined && u.id !== miPerfil.id
       );
@@ -65,7 +66,7 @@ export class PlantUsuarioAnyadir implements OnInit {
     }
   }
 
-  // Actualiza el término de búsqueda
+  // --- ACCIONES ---
   onSearch(event: Event) {
     const input = event.target as HTMLInputElement;
     this.filtro.set(input.value);
@@ -77,22 +78,28 @@ export class PlantUsuarioAnyadir implements OnInit {
     );
   }
 
-  estaSeleccionado(id: number) {
+  estaSeleccionado(id: number): boolean {
     return this.seleccionados().includes(id);
   }
 
-  guardar(): void {
+  async guardar(): Promise<void> {
+    // Pilar: Validación de Negocio
     if (!this.nombreGrupo || this.seleccionados().length === 0) return;
 
-    this.cargando.set(true);
-    const nuevoGrupo: PlantillaUsuario = {
-      nombre: this.nombreGrupo,
-      usuarios: this.seleccionados().map(id => ({ id }))
-    };
+    try {
+      this.cargando.set(true); // Pilar: Bloqueo de Re-entrada
 
-    this.plantillaUsuarioService.create(nuevoGrupo).subscribe({
-      next: () => void this.router.navigate(['/dashboard/difusion/administrar-grupos']),
-      error: () => this.cargando.set(false)
-    });
+      const nuevoGrupo: PlantillaUsuario = {
+        nombre: this.nombreGrupo,
+        usuarios: this.seleccionados().map(id => ({ id }))
+      };
+
+      await firstValueFrom(this.plantillaUsuarioService.create(nuevoGrupo));
+      void this.router.navigate(['/dashboard/difusion/administrar-grupos']);
+    } catch (error) {
+      console.error("Error al crear grupo:", error);
+    } finally {
+      this.cargando.set(false);
+    }
   }
 }

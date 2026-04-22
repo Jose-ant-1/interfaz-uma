@@ -66,7 +66,6 @@ export class AuthService {
 
   actualizarDatosTrasCambio(nuevoEmail: string, nuevoNombre: string) {
     const nombreLimpio = nuevoNombre?.trim() || 'Usuario';
-    const emailLimpio = nuevoEmail?.trim().toLowerCase() || '';
 
     // Actualizamos el storage primero
     localStorage.setItem('userName', nombreLimpio);

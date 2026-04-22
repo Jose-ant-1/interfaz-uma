@@ -38,55 +38,63 @@ export class MonitoreoEditar implements OnInit {
 
   invitadosOriginales: string[] = [];
 
-  ngOnInit() {
+  ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
-      const monitoreoId = Number(id);
-      this.cargarMonitoreo(monitoreoId);
-      this.cargarUsuariosDelSistema();
-      this.cargarPaginas();
+      // No usamos await aquí para cumplir con la firma de ngOnInit
+      this.inicializarDatos(Number(id));
     }
   }
 
-  cargarPaginas() {
-    this.paginaService.getPaginas().subscribe({
-      next: (paginas) => {
-        this.paginasDisponibles.set(paginas);
-      },
-      error: (err) => {
-        console.error('Error al cargar las páginas:', err);
-      }
-    });
+  private async inicializarDatos(id: number): Promise<void> {
+    // Solo bloqueamos si ya tenemos ESE mismo ID cargado y estamos en proceso
+    if (this.monitoreo.id === id && this.cargando()) return;
+
+    this.cargando.set(true); // Marcamos el inicio del proceso
+    try {
+      await Promise.all([
+        this.cargarMonitoreo(id),
+        this.cargarUsuariosDelSistema(),
+        this.cargarPaginas()
+      ]);
+    } catch (err) {
+      console.error('Error crítico:', err);
+    } finally {
+      this.cargando.set(false); // Aseguramos liberación de UI
+    }
   }
 
-  cargarMonitoreo(id: number) {
-    this.monitoreoService.getMonitoreoPorId(id).subscribe({
-      next: (data) => {
-        this.monitoreo = data;
-
-        // Guardamos los emails originales para saber a quién quitar/poner luego
-        this.invitadosOriginales = data.invitados?.map(i => i.email).filter(e => !!e) || [];
-
-        this.cargando.set(false);
-      },
-      error: (err) => {
-        console.error('Error al cargar el monitoreo:', err);
-        this.cargando.set(false);
-      }
-    });
+  private async cargarPaginas(): Promise<void> {
+    try {
+      const paginas = await firstValueFrom(this.paginaService.getPaginas());
+      this.paginasDisponibles.set(paginas);
+    } catch (err) {
+      console.error('Error al cargar las páginas:', err);
+    }
   }
 
-  cargarUsuariosDelSistema() {
-    this.usuarioService.getUsuarios().subscribe({
-      next: (users) => {
-        // Filtramos para que el dueño no se invite a sí mismo
-        const listaFiltrada = users.filter(u => u.id !== this.usuarioLogueadoId());
-        this.usuariosSistema.set(listaFiltrada);
-      },
-      error: (err) => {
-        console.error('Error al obtener usuarios del sistema:', err);
-      }
-    });
+  private async cargarMonitoreo(id: number): Promise<void> {
+    try {
+      const data = await firstValueFrom(this.monitoreoService.getMonitoreoPorId(id));
+      this.monitoreo = data;
+      this.invitadosOriginales = data.invitados?.map(i => i.email).filter(e => !!e) || [];
+    } catch (err) {
+      console.error('Error al cargar el monitoreo:', err);
+      // No quites el cargando aquí, el finally del orquestador lo hará
+    }
+  }
+
+  private async cargarUsuariosDelSistema(): Promise<void> {
+    try {
+      const users = await firstValueFrom(this.usuarioService.getUsuarios());
+      // Nota: usuarioLogueadoId() debe estar seteado antes de filtrar
+      const listaFiltrada = users.filter(u => u.id !== this.usuarioLogueadoId());
+      this.usuariosSistema.set(listaFiltrada);
+    } catch (err) {
+      console.error('Error al obtener usuarios del sistema:', err);
+      // Re-lanzamos para que Promise.all sepa que falló
+      throw err;
+    }
   }
 
   esInvitado(userId: number): boolean {
@@ -95,21 +103,18 @@ export class MonitoreoEditar implements OnInit {
   }
 
   toggleInvitado(user: Usuario) {
+    // PILAR: SANITIZACIÓN e INTEGRIDAD
+    // Si el usuario no tiene ID, abortamos la operación para no corromper el estado
+    if (!user.id) return;
+
     this.monitoreo.invitados ??= [];
 
     const index = this.monitoreo.invitados.findIndex(i => i.id === user.id);
 
     if (index > -1) {
-      // Si ya está, lo quitamos de la lista local
       this.monitoreo.invitados.splice(index, 1);
     } else {
-      // Si no está, lo añadimos
-      this.monitoreo.invitados.push({
-        id: user.id,
-        nombre: user.nombre,
-        email: user.email,
-        permiso: user.permiso
-      } as any);
+      this.monitoreo.invitados.push(user as any);
     }
   }
 

@@ -13,7 +13,8 @@ import {PaginaCardComponent} from '../pagina-card/pagina-card';
 })
 export class PaginaListComponent implements OnInit {
   private readonly paginaService = inject(PaginaService);
-  private readonly buscador = new Subject<string>(); // Flujo de términos de búsqueda
+  private readonly buscador = new Subject<string>();
+  // Flujo de términos de búsqueda
   // Signal para manejar los datos reactivamente
   paginas = signal<Pagina[]>([]);
 
@@ -46,14 +47,26 @@ export class PaginaListComponent implements OnInit {
   }
 
   eliminar(id: number): void {
-    if (confirm('¿Deseas eliminar esta página del catálogo general?')) {
-      this.paginaService.deletePagina(id).subscribe({
-        next: () => {
-          this.paginas.update(actuales => actuales.filter(p => p.id !== id));
-        },
-        error: (err) => alert('Error: No se puede eliminar una página vinculada a monitoreos activos.')
-      });
-    }
+    // Pilar de Caso de Borde: Salida temprana si el usuario cancela
+    if (!confirm('¿Deseas eliminar esta página del catálogo general?')) return;
+
+    this.paginaService.deletePagina(id).subscribe({
+      next: () => {
+        // Pilar de Integridad: Actualización atómica del signal
+        this.paginas.update(actuales => actuales.filter(p => p.id !== id));
+      },
+      error: (err: any) => {
+        // Pilar de Manejo de Errores: Diferenciamos el error
+        // Comprobamos si es un error de conflicto (409) o contiene la palabra clave
+        const esConflicto = err.status === 409 || (err.message?.includes('Conflict'));
+
+        const mensajeFinal = esConflicto
+          ? 'No se puede eliminar una página vinculada a monitoreos activos.'
+          : 'Error al intentar eliminar la página. Inténtelo de nuevo más tarde.';
+
+        alert(`Error: ${mensajeFinal}`);
+      }
+    });
   }
 
 }

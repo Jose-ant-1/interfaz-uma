@@ -49,10 +49,14 @@ export class PlantMonitoreoLista implements OnInit {
     if (!confirm('¿Estás seguro de que quieres eliminar esta plantilla?')) return;
 
     try {
+      this.cargando.set(true); // Encendemos el spinner
       await firstValueFrom(this.plantillaService.delete(id));
       this.plantillas.update(list => list.filter(p => p.id !== id));
     } catch (error) {
       console.error("Error al eliminar:", error);
+    } finally {
+      this.cargando.set(false); // ¡ESTO es lo que el test reclama! Pilar 4 y 5
     }
   }
+
 }

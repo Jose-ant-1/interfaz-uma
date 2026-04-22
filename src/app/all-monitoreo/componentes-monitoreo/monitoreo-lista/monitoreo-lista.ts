@@ -43,6 +43,7 @@ export class MonitoreoLista implements OnInit, OnDestroy {
   actualizarFiltro(event: any) {
     this.filtroTexto.set(event.target.value);
   }
+
   ngOnInit() {
     this.cargarTodo();
 

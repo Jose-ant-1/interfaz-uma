@@ -33,9 +33,18 @@ export class PlantUsuarioEditar implements OnInit {
 
   private async inicializarComponente() {
     const idParam = this.route.snapshot.paramMap.get('id');
-    if (idParam) {
-      this.idGrupo = Number(idParam);
+
+    // Convertimos de forma explícita
+    const numericId = idParam ? Number(idParam) : Number.NaN;
+
+    // Pilar: Validación de Negocio y Seguridad
+    // Usamos Number.isNaN para asegurar que numericId es un número válido
+    if (idParam !== null && !Number.isNaN(numericId)) {
+      this.idGrupo = numericId;
       await this.cargarDatos();
+    } else {
+      // Pilar: Resiliencia (Redirección si el ID es inválido o no existe)
+      this.router.navigate(['/dashboard/difusion/administrar-grupos']);
     }
   }
 
@@ -46,6 +55,7 @@ export class PlantUsuarioEditar implements OnInit {
       const [miPerfil, todosLosUsuarios, grupo] = await Promise.all([
         firstValueFrom(this.usuarioService.getPerfil()),
         firstValueFrom(this.usuarioService.getUsuarios()),
+        // Aquí usas this.idGrupo
         firstValueFrom(this.plantillaUsuarioService.findById(this.idGrupo))
       ]);
 

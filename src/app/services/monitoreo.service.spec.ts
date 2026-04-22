@@ -5,28 +5,30 @@ import { MonitoreoService } from './monitoreo.service';
 import { MonitoreoDTODetalle, MonitoreoListadoDTO } from '../models/monitoreo.model';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-
 describe('MonitoreoService', () => {
   let service: MonitoreoService;
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
+    // 1. LIMPIEZA: Forzamos el reset antes de configurar nada
+    TestBed.resetTestingModule();
+
+    // 2. CONFIGURACIÓN
     TestBed.configureTestingModule({
       providers: [
         MonitoreoService,
         provideHttpClient(),
         provideHttpClientTesting(),
-        // NOTA: No añadimos provideZoneChangeDetection aquí para evitar conflictos con el IDE
-        // ya que tu test-setup.ts ya carga zone.js
       ]
     });
 
+    // 3. INSTANCIACIÓN: Solo después de configurar llamamos a inject
     service = TestBed.inject(MonitoreoService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => {
-    // Verifica que no queden peticiones pendientes entre un test y otro
+    // Pilar Resiliencia: Cerramos todas las peticiones abiertas para evitar timeouts
     httpMock.verify();
   });
 

@@ -55,4 +55,5 @@ export class PlantUsuarioLista implements OnInit {
       console.error("Error al eliminar grupo:", error);
     }
   }
+  
 }

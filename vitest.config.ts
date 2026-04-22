@@ -12,7 +12,11 @@ export default defineConfig({
     outputFile: {
       junit: './junit-report.xml'
     },
-
+    coverage: {
+      provider: 'v8', // Es el que tienes en tu package.json
+      reporter: ['text', 'lcov'], // 'lcov' genera el archivo lcov.info para Sonar
+      reportsDirectory: './coverage'
+    },
     // El truco que usamos antes para TS2769
     ...({
       pool: 'threads',

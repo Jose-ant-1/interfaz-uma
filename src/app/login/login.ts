@@ -54,18 +54,25 @@ export class Login implements OnDestroy {
         },
         error: (err) => {
           this.loading.set(false);
-          // MANEJO DE ERRORES SEGÚN EL TIPO
+          // PILAR: MANEJO DE ERRORES Y RESILIENCIA
           if (err.status === 0) {
             this.errorMessage.set('Error: Sin conexión al servidor');
-          } else {
+          } else if (err.status === 401 || err.status === 403) {
             this.errorMessage.set('Error: Usuario o contraseña incorrectos');
+          } else {
+            // Caso de borde para otros errores (500, 404, etc)
+            this.errorMessage.set('Error: Ha ocurrido un fallo inesperado');
           }
         }
       });
   }
 
   private isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Pilar: Sanitización (Evitar backtracking catastrófico)
+    // Usamos una lógica más simple y segura que SonarQube no marca como vulnerable
+    if (!email || email.length > 254) return false;
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
   }
 }

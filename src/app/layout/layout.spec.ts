@@ -3,7 +3,7 @@ import { Layout } from './layout';
 import { AuthService } from '../services/auth';
 import { Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
-import { signal } from '@angular/core';
+import {importProvidersFrom, signal} from '@angular/core';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {CommonModule} from '@angular/common';
 
@@ -25,7 +25,9 @@ describe('LayoutComponent', () => {
   };
 
   const crearFixtureConTemplate = async (template: string) => {
+    // Pilar Infraestructura: Reseteamos para poder re-configurar el componente
     TestBed.resetTestingModule();
+
     await TestBed.configureTestingModule({
       imports: [CommonModule, RouterModule.forRoot([])],
       providers: [
@@ -33,38 +35,35 @@ describe('LayoutComponent', () => {
         { provide: Router, useValue: mockRouter }
       ]
     }).overrideComponent(Layout, {
-      set: { template, templateUrl: undefined }
+      set: {
+        template,
+        templateUrl: undefined,
+        // Importante: Si usas otros componentes dentro, añádelos aquí
+      }
     }).compileComponents();
 
-    const fixture = TestBed.createComponent(Layout);
-    fixture.detectChanges();
-    return fixture;
+    const fixtureDom = TestBed.createComponent(Layout);
+    fixtureDom.detectChanges();
+    return fixtureDom;
   };
 
+// Sustituye tu beforeEach actual por este:
   beforeEach(async () => {
     vi.clearAllMocks();
 
+    // Configuración estándar para tests de lógica (sin DOM pesado)
     await TestBed.configureTestingModule({
-      // 1. QUITAMOS 'Layout' de aquí para evitar que busque el HTML antes de tiempo
-      imports: [RouterModule.forRoot([]), CommonModule],
+      imports: [CommonModule, RouterModule.forRoot([])],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: Router, useValue: mockRouter }
       ]
+    }).overrideComponent(Layout, {
+      set: { template: '<div></div>', templateUrl: undefined }
     }).compileComponents();
-
-    // 2. AHORA SÍ: Anulamos la carga del archivo HTML
-    TestBed.overrideComponent(Layout, {
-      set: {
-        template: '<div></div>',
-        templateUrl: undefined
-      }
-    });
 
     fixture = TestBed.createComponent(Layout);
     component = fixture.componentInstance;
-
-    // 3. Ejecutamos la detección inicial para procesar signals y computed
     fixture.detectChanges();
   });
 
@@ -141,40 +140,44 @@ describe('LayoutComponent', () => {
 
     // Helper para crear un fixture con un template específico sin romper el TestBed
     const crearFixtureConTemplate = async (template: string) => {
-      TestBed.resetTestingModule(); // Limpiamos para evitar el error de instanciación
+      // 1. Limpieza absoluta del motor de tests
+      TestBed.resetTestingModule();
+
+      // 2. Re-configuración ligera
       await TestBed.configureTestingModule({
-        imports: [CommonModule],
+        imports: [CommonModule], // Solo lo necesario para el motor de tests
         providers: [
           { provide: AuthService, useValue: mockAuthService },
           { provide: Router, useValue: mockRouter }
         ]
       }).overrideComponent(Layout, {
-        set: { template, templateUrl: undefined }
+        set: {
+          template, // Inyectamos el HTML dinámico para el test
+          templateUrl: undefined // IMPORTANTE: Anulamos la carga del archivo físico
+          // ELIMINADO: standalone e imports (Angular no permite sobreescribirlos aquí)
+        }
       }).compileComponents();
 
-      const fixture = TestBed.createComponent(Layout);
-      fixture.detectChanges();
-      return fixture;
+      const fixtureDom = TestBed.createComponent(Layout);
+      fixtureDom.detectChanges();
+      return fixtureDom;
     };
 
     it('debería sincronizar el esAdmin (Signal) con la visibilidad física del DOM', async () => {
-      // Definimos qué queremos ver en el DOM
       const template = `@if (esAdmin()) { <div id="admin-ui">Admin</div> }`;
       const fixtureDom = await crearFixtureConTemplate(template);
 
-      // ESCENARIO A: Es USER
+      // Usamos la instancia local del fixture recién creado
       mockAuthService.userRole.set('USER');
-      fixtureDom.detectChanges(); // Sincronizamos
-      expect(fixtureDom.componentInstance.esAdmin()).toBe(false); // Signal
-      expect(fixtureDom.nativeElement.querySelector('#admin-ui')).toBeNull(); // DOM
+      fixtureDom.detectChanges();
+      expect(fixtureDom.componentInstance.esAdmin()).toBe(false);
+      expect(fixtureDom.nativeElement.querySelector('#admin-ui')).toBeNull();
 
-      // ESCENARIO B: Cambia a ADMIN
       mockAuthService.userRole.set('ADMIN');
       fixtureDom.detectChanges();
-      expect(fixtureDom.componentInstance.esAdmin()).toBe(true); // Signal
-      expect(fixtureDom.nativeElement.querySelector('#admin-ui')).toBeTruthy(); // DOM
+      expect(fixtureDom.componentInstance.esAdmin()).toBe(true);
+      expect(fixtureDom.nativeElement.querySelector('#admin-ui')).toBeTruthy();
     });
-
     it('debería reflejar el userName del servicio directamente en el HTML', async () => {
       const template = `<span id="user-display">{{ userName() }}</span>`;
       const fixtureDom = await crearFixtureConTemplate(template);

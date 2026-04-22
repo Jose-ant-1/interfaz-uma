@@ -1,16 +1,19 @@
-import {TestBed} from '@angular/core/testing';
-import {provideHttpClient} from '@angular/common/http';
-import {provideHttpClientTesting, HttpTestingController} from '@angular/common/http/testing';
-import {UsuarioService} from './usuario.service';
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { UsuarioService } from './usuario.service';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {Usuario, UsuarioDTO} from '../models/usuario.model';
-import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 
 describe('UsuarioService', () => {
   let service: UsuarioService;
   let httpMock: HttpTestingController;
+
+  // CAMBIO: Renombrar de 'resource' a 'URL_BASE'
   const resource = '/usuarios';
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
         UsuarioService,
@@ -18,13 +21,11 @@ describe('UsuarioService', () => {
         provideHttpClientTesting()
       ]
     });
-
     service = TestBed.inject(UsuarioService);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => {
-    // Verificamos que no queden peticiones pendientes
     httpMock.verify();
   });
 

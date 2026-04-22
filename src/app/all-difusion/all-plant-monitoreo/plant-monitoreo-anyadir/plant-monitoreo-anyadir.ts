@@ -43,7 +43,6 @@ export class PlantMonitoreoAnyadir implements OnInit {
     });
   }
 
-  // Actualiza el término de búsqueda
   onSearch(event: Event) {
     const input = event.target as HTMLInputElement;
     this.filtro.set(input.value);

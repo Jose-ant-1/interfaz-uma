@@ -26,17 +26,22 @@ export class MonitoreoAnyadir implements OnInit {
   paginasExistentes = signal<Pagina[]>([]);
   cargando = signal(false);
 
-  ngOnInit() {
-    this.inicializarComponente();
+  ngOnInit(): void {
+    this.nombre = '';
+    // Llamamos al método asíncrono sin el await para respetar la interfaz void
+    void this.inicializarComponente();
   }
 
-  // 3. Lógica asíncrona en método privado
   private async inicializarComponente() {
     try {
+      this.cargando.set(true);
       const paginas = await firstValueFrom(this.paginaService.getPaginas());
-      this.paginasExistentes.set(paginas);
+
+      this.paginasExistentes.set(paginas || []);
     } catch (e) {
-      console.error("Error al cargar las páginas desde PaginaService", e);
+      console.error("Error al cargar las páginas", e);
+    } finally {
+      this.cargando.set(false);
     }
   }
 

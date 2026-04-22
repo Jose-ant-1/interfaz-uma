@@ -125,7 +125,6 @@ export class DifusionMasiva implements OnInit {
 
   // --- LÓGICA PRINCIPAL ---
 
-
   async ejecutarDifusion() {
     try {
       this.cargando.set(true);
@@ -177,9 +176,7 @@ export class DifusionMasiva implements OnInit {
     }
   }
 
-
-
-  private limpiarSeleccion() {
+  limpiarSeleccion() {
     this.idPlantillaSeleccionada.set(null);
     this.idMonitoreoUnicoSeleccionado.set(null);
     this.idPlantillaUsuarioSeleccionada.set(null);

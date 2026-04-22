@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core'; // Añadido DestroyRef
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { PaginaService } from '../../services/pagina.service';
 import { Pagina } from '../../models/pagina.model';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop'; // Añadido este import
 
 @Component({
   selector: 'app-pagina-form',
@@ -15,48 +16,50 @@ export class PaginaEditar implements OnInit {
   private readonly paginaService = inject(PaginaService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef); // Correcto ahora
 
-  // Signal para manejar los datos del formulario
   pagina = signal<Pagina | null>(null);
-
   esEdicion = signal(false);
+  cargando = signal(false); // Pilar: Estado de Carga
 
   ngOnInit(): void {
-    // Capturamos el ID de la ruta
-    const id = this.route.snapshot.params['id'];
-
-    if (id) {
+    const idParam = this.route.snapshot.params['id'];
+    if (idParam && !Number.isNaN(+idParam)) {
       this.esEdicion.set(true);
-      // Cargamos los datos actuales de la página desde el backend
-      this.paginaService.getPaginaById(+id).subscribe({
-        next: (data) => this.pagina.set(data),
-        error: () => void this.router.navigate(['/dashboard/paginas'])
-      });
+      this.paginaService.getPaginaById(+idParam)
+        .pipe(takeUntilDestroyed(this.destroyRef)) // Protección de memoria
+        .subscribe({
+          next: (data) => this.pagina.set(data),
+          error: () => void this.router.navigate(['/dashboard/paginas'])
+        });
+    } else {
+      this.esEdicion.set(false);
+      this.pagina.set({ nombre: '', url: '', notaInfo: '' } as Pagina);
     }
   }
 
   guardar(): void {
     const data = this.pagina();
-    if (!data) return; // Si por alguna razón es nulo, no hacemos nada
+    if (!data || this.cargando()) return; // Bloqueo de re-entrada
 
-    if (this.esEdicion()) {
-      // Si es edición, usamos el updatePagina
-      this.paginaService.updatePagina(data.id, data).subscribe({
-        next: () => void this.router.navigate(['/dashboard/paginas']),
+    this.cargando.set(true);
+
+    const request$ = this.esEdicion()
+      ? this.paginaService.updatePagina(data.id, data)
+      : this.paginaService.createPagina(data);
+
+    request$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.cargando.set(false);
+          void this.router.navigate(['/dashboard/paginas']);
+        },
         error: (err) => {
-          console.error(err);
-          alert('Error al actualizar la página');
+          this.cargando.set(false);
+          console.error('Error al guardar:', err);
+          alert('Error al procesar la solicitud');
         }
       });
-    } else {
-      // Si es creación, usamos createPagina
-      this.paginaService.createPagina(data).subscribe({
-        next: () => void this.router.navigate(['/dashboard/paginas']),
-        error: (err) => {
-          console.error(err);
-          alert('Error al crear la página');
-        }
-      });
-    }
   }
 }

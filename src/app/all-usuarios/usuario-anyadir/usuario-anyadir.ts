@@ -25,27 +25,24 @@ export class UsuarioAnyadir {
     permiso: 'USER'
   });
 
-// Fragmento a mejorar en el método guardar() de usuario-editar.ts
   guardar(): void {
-    const currentUsuario = this.usuario();
-    if (!currentUsuario?.id || this.cargando()) return; // Bloqueo de re-entrada
+    if (this.cargando()) return; // Pilar: Bloqueo
 
-    this.cargando.set(true);
-
-    // Pilar de Sanitización
-    const usuarioSanitizado = {
-      ...currentUsuario,
-      nombre: currentUsuario.nombre.trim(),
-      email: currentUsuario.email.trim()
+    const datos = this.nuevoUsuario();
+    const datosLimpios = { // Pilar: Sanitización
+      ...datos,
+      nombre: datos.nombre?.trim(),
+      email: datos.email?.trim()
     };
 
-    this.usuarioService.updateUsuario(currentUsuario.id, usuarioSanitizado).subscribe({
+    this.cargando.set(true);
+    this.usuarioService.crearUsuario(datosLimpios).subscribe({
       next: () => void this.router.navigate(['/dashboard/usuarios']),
       error: (err) => {
-        this.cargando.set(false);
-        console.error(err);
-        alert('Error al actualizar. Revisa que no se repita el nombre o el correo.');
+        this.cargando.set(false); // Pilar: Manejo de Errores
+        alert('Error al guardar');
       }
     });
   }
+
 }
