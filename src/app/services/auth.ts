@@ -25,7 +25,7 @@ export class AuthService {
     }).pipe(
       tap(res => localStorage.setItem('authData', `Bearer ${res.token}`)),
       switchMap(() => this.http.get<Usuario>(`${this.resource}/me`)),
-      map((user: Usuario): Usuario => ({ // ✅ Tipado en la transformación
+      map((user: Usuario): Usuario => ({ // Tipado en la transformación
         ...user,
         permiso: user.permiso || 'USER',
         nombre: user.nombre || 'Usuario'
@@ -52,7 +52,6 @@ export class AuthService {
     this.userId.set(user.id?.toString() || null);
   }
 
-// auth.ts
   logout() {
     // Pilar 4: Integridad (Limpieza total garantizada)
     const keys = ['authData', 'userRole', 'userName', 'userId'];
