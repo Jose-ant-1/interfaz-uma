@@ -8,8 +8,10 @@ RUN npm run build -- --configuration production
 
 # Etapa 2: Servidor (Nginx) - RUTA CORREGIDA
 FROM nginx:stable-alpine
-# Cambiamos 'interfaz-uma' por 'uma'
-COPY --from=build /app/dist/uma/browser /usr/share/nginx/html
+# Copiamos los archivos de Angular (asegúrate de que la ruta sea correcta)
+COPY dist/ /usr/share/nginx/html/
+# ESTA LÍNEA ES VITAL: Copia tu configuración personalizada
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 
