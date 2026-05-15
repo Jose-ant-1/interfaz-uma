@@ -8,11 +8,10 @@ RUN npm run build -- --configuration production
 
 # Etapa 2: Servidor (Nginx)
 FROM nginx:stable-alpine
-# CORRECCIÓN AQUÍ: Copiamos DESDE la etapa build (--from=build)
-# Nota: Revisa si tu carpeta es 'dist/' o 'dist/tu-proyecto-name/'
-COPY --from=build /app/dist/interfaz-uma/browser/ /usr/share/nginx/html/
+# CAMBIO AQUÍ: La ruta real según tus logs es /app/dist/uma/browser/
+COPY --from=build /app/dist/uma/browser/ /usr/share/nginx/html/
 
-# Copia tu configuración personalizada (esto arregla el 404 al refrescar)
+# Esto arregla el 404 al refrescar
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
